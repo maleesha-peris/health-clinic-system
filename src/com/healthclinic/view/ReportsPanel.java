@@ -80,14 +80,30 @@ public class ReportsPanel extends JPanel {
         controlRow.add(createLabel("From:"));
         txtFromDate = createTextField();
         txtFromDate.setText(LocalDate.now().minusDays(30).toString());
-        txtFromDate.setPreferredSize(new Dimension(95, 32));
+        txtFromDate.setPreferredSize(new Dimension(88, 32));
         controlRow.add(txtFromDate);
+        ModernButton btnPickFrom = new ModernButton("", IconFactory.createCalendarIcon(13, Color.WHITE), ModernButton.ButtonStyle.PRIMARY);
+        btnPickFrom.setToolTipText("Select Start Date");
+        btnPickFrom.setPreferredSize(new Dimension(32, 32));
+        btnPickFrom.addActionListener(e -> {
+            String picked = DatePickerDialog.showDatePicker(this, txtFromDate.getText());
+            if (picked != null) txtFromDate.setText(picked);
+        });
+        controlRow.add(btnPickFrom);
 
         controlRow.add(createLabel("To:"));
         txtToDate = createTextField();
         txtToDate.setText(LocalDate.now().plusDays(30).toString());
-        txtToDate.setPreferredSize(new Dimension(95, 32));
+        txtToDate.setPreferredSize(new Dimension(88, 32));
         controlRow.add(txtToDate);
+        ModernButton btnPickTo = new ModernButton("", IconFactory.createCalendarIcon(13, Color.WHITE), ModernButton.ButtonStyle.PRIMARY);
+        btnPickTo.setToolTipText("Select End Date");
+        btnPickTo.setPreferredSize(new Dimension(32, 32));
+        btnPickTo.addActionListener(e -> {
+            String picked = DatePickerDialog.showDatePicker(this, txtToDate.getText());
+            if (picked != null) txtToDate.setText(picked);
+        });
+        controlRow.add(btnPickTo);
 
         ModernButton btnGenerate = new ModernButton("Generate Report", IconFactory.createReportIcon(14, Color.WHITE), ModernButton.ButtonStyle.PRIMARY);
         btnGenerate.addActionListener(e -> generateReport());

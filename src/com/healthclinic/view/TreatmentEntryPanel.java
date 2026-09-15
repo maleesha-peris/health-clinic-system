@@ -185,7 +185,18 @@ public class TreatmentEntryPanel extends JPanel {
         gridForm.add(createFieldLabel("Attending Doctor: *"));
         gridForm.add(cmbDoctors);
         gridForm.add(createFieldLabel("Date (YYYY-MM-DD): *"));
-        gridForm.add(txtDate);
+        JPanel datePanel = new JPanel(new BorderLayout(4, 0));
+        datePanel.setOpaque(false);
+        datePanel.add(txtDate, BorderLayout.CENTER);
+        ModernButton btnPickDate = new ModernButton("", IconFactory.createCalendarIcon(14, Color.WHITE), ModernButton.ButtonStyle.PRIMARY);
+        btnPickDate.setToolTipText("Open Interactive Calendar to Select Treatment Date");
+        btnPickDate.setPreferredSize(new Dimension(36, 32));
+        btnPickDate.addActionListener(e -> {
+            String picked = DatePickerDialog.showDatePicker(this, txtDate.getText());
+            if (picked != null) txtDate.setText(picked);
+        });
+        datePanel.add(btnPickDate, BorderLayout.EAST);
+        gridForm.add(datePanel);
         gridForm.add(createFieldLabel("Diagnosis: *"));
         gridForm.add(txtDiagnosis);
 

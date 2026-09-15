@@ -163,7 +163,18 @@ public class AppointmentBookingPanel extends JPanel {
 
         // Row 2
         gridForm.add(createFieldLabel("Date & Time: *"));
-        gridForm.add(txtDateTime);
+        JPanel dtPanel = new JPanel(new BorderLayout(4, 0));
+        dtPanel.setOpaque(false);
+        dtPanel.add(txtDateTime, BorderLayout.CENTER);
+        ModernButton btnPickDt = new ModernButton("", IconFactory.createCalendarIcon(14, Color.WHITE), ModernButton.ButtonStyle.PRIMARY);
+        btnPickDt.setToolTipText("Open Interactive Calendar & Time Picker");
+        btnPickDt.setPreferredSize(new Dimension(36, 32));
+        btnPickDt.addActionListener(e -> {
+            String picked = DatePickerDialog.showDateTimePicker(this, txtDateTime.getText());
+            if (picked != null) txtDateTime.setText(picked);
+        });
+        dtPanel.add(btnPickDt, BorderLayout.EAST);
+        gridForm.add(dtPanel);
         gridForm.add(createFieldLabel("Status:"));
         gridForm.add(cmbStatus);
         gridForm.add(createFieldLabel("Purpose / Notes:"));

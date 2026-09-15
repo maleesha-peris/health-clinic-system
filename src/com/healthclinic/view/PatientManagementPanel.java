@@ -168,7 +168,18 @@ public class PatientManagementPanel extends JPanel {
         gridForm.add(createFieldLabel("Email Address: *"));
         gridForm.add(txtEmail);
         gridForm.add(createFieldLabel("DOB (YYYY-MM-DD): *"));
-        gridForm.add(txtDob);
+        JPanel dobPanel = new JPanel(new BorderLayout(4, 0));
+        dobPanel.setOpaque(false);
+        dobPanel.add(txtDob, BorderLayout.CENTER);
+        ModernButton btnPickDob = new ModernButton("", IconFactory.createCalendarIcon(14, Color.WHITE), ModernButton.ButtonStyle.PRIMARY);
+        btnPickDob.setToolTipText("Open Interactive Calendar to Select Birth Date");
+        btnPickDob.setPreferredSize(new Dimension(36, 32));
+        btnPickDob.addActionListener(e -> {
+            String picked = DatePickerDialog.showDatePicker(this, txtDob.getText());
+            if (picked != null) txtDob.setText(picked);
+        });
+        dobPanel.add(btnPickDob, BorderLayout.EAST);
+        gridForm.add(dobPanel);
         gridForm.add(createFieldLabel("Gender: *"));
         gridForm.add(cmbGender);
 
