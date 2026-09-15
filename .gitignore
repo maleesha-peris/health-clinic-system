@@ -1,0 +1,12 @@
+﻿bin/
+*.class
+.idea/
+*.iml
+.vscode/
+.project
+.classpath
+.settings/
+nbproject/private/
+build/
+dist/
+*.log

@@ -1,0 +1,3 @@
+@echo off
+echo Running Community Health Clinic System...
+java -Dfile.encoding=UTF-8 -cp bin com.healthclinic.Main
