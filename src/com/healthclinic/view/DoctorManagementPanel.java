@@ -12,7 +12,7 @@ import java.awt.*;
 
 /**
  * Task 5 - Register Doctor & Management Screen.
- * Provides doctor registration, updating, deleting, and roster viewing.
+ * Modern UI for registering and allocating doctors.
  */
 public class DoctorManagementPanel extends JPanel {
 
@@ -37,7 +37,7 @@ public class DoctorManagementPanel extends JPanel {
 
         setLayout(new BorderLayout(15, 15));
         setBackground(UITheme.BG_MAIN);
-        setBorder(new EmptyBorder(15, 15, 15, 15));
+        setBorder(new EmptyBorder(16, 18, 18, 18));
 
         initUI();
         refreshTable();
@@ -49,6 +49,7 @@ public class DoctorManagementPanel extends JPanel {
         topPanel.setOpaque(false);
         JLabel lblTitle = new JLabel("Doctor Registration & Allocation");
         lblTitle.setFont(UITheme.FONT_TITLE);
+        lblTitle.setForeground(UITheme.TEXT_PRIMARY);
         topPanel.add(lblTitle, BorderLayout.WEST);
         add(topPanel, BorderLayout.NORTH);
 
@@ -57,58 +58,59 @@ public class DoctorManagementPanel extends JPanel {
 
         // --- LEFT: REGISTRATION FORM ---
         JPanel formCard = UITheme.createCardPanel();
-        formCard.setLayout(new BorderLayout(10, 10));
-        formCard.setPreferredSize(new Dimension(360, 480));
+        formCard.setLayout(new BorderLayout(12, 12));
+        formCard.setPreferredSize(new Dimension(370, 480));
 
-        JLabel lblFormTitle = new JLabel("Doctor Profile Form");
+        JLabel lblFormTitle = new JLabel("Doctor Profile Details");
         lblFormTitle.setFont(UITheme.FONT_HEADER);
+        lblFormTitle.setForeground(UITheme.TEXT_PRIMARY);
         formCard.add(lblFormTitle, BorderLayout.NORTH);
 
         JPanel fieldsPanel = new JPanel(new GridLayout(8, 2, 8, 10));
         fieldsPanel.setOpaque(false);
 
-        txtId = new JTextField();
-        txtName = new JTextField();
-        txtPhone = new JTextField();
-        txtEmail = new JTextField();
+        txtId = createTextField();
+        txtName = createTextField();
+        txtPhone = createTextField();
+        txtEmail = createTextField();
         cmbSpecialization = new JComboBox<>(new String[]{
                 "General Practice", "Cardiology", "Pediatrics", "Dermatology",
                 "Orthopedics", "General Surgery", "Neurology", "Diagnostic Medicine"
         });
-        txtLicense = new JTextField();
-        txtFee = new JTextField();
-        txtDays = new JTextField(); // e.g. Mon, Wed, Fri
+        txtLicense = createTextField();
+        txtFee = createTextField();
+        txtDays = createTextField();
 
-        fieldsPanel.add(new JLabel("Doctor ID: *"));
+        fieldsPanel.add(createFieldLabel("Doctor ID: *"));
         fieldsPanel.add(txtId);
-        fieldsPanel.add(new JLabel("Doctor Name: *"));
+        fieldsPanel.add(createFieldLabel("Doctor Name: *"));
         fieldsPanel.add(txtName);
-        fieldsPanel.add(new JLabel("Phone: *"));
+        fieldsPanel.add(createFieldLabel("Phone: *"));
         fieldsPanel.add(txtPhone);
-        fieldsPanel.add(new JLabel("Email: *"));
+        fieldsPanel.add(createFieldLabel("Email: *"));
         fieldsPanel.add(txtEmail);
-        fieldsPanel.add(new JLabel("Specialization: *"));
+        fieldsPanel.add(createFieldLabel("Specialization: *"));
         fieldsPanel.add(cmbSpecialization);
-        fieldsPanel.add(new JLabel("License Number: *"));
+        fieldsPanel.add(createFieldLabel("License No: *"));
         fieldsPanel.add(txtLicense);
-        fieldsPanel.add(new JLabel("Consultation Fee ($): *"));
+        fieldsPanel.add(createFieldLabel("Consultation Fee ($): *"));
         fieldsPanel.add(txtFee);
-        fieldsPanel.add(new JLabel("Available Days: *"));
+        fieldsPanel.add(createFieldLabel("Available Days: *"));
         fieldsPanel.add(txtDays);
 
         formCard.add(fieldsPanel, BorderLayout.CENTER);
 
-        // Action Buttons
+        // Buttons
         JPanel formBtnRow = new JPanel(new GridLayout(1, 3, 8, 0));
         formBtnRow.setOpaque(false);
 
-        JButton btnRegister = UITheme.createPrimaryButton("Register");
+        ModernButton btnRegister = new ModernButton("Register", ModernButton.ButtonStyle.PRIMARY);
         btnRegister.addActionListener(e -> onRegister());
 
-        JButton btnUpdate = UITheme.createSecondaryButton("Update");
+        ModernButton btnUpdate = new ModernButton("Update", ModernButton.ButtonStyle.SECONDARY);
         btnUpdate.addActionListener(e -> onUpdate());
 
-        JButton btnClear = UITheme.createSecondaryButton("Clear");
+        ModernButton btnClear = new ModernButton("Clear", ModernButton.ButtonStyle.SECONDARY);
         btnClear.addActionListener(e -> clearForm());
 
         formBtnRow.add(btnRegister);
@@ -118,9 +120,9 @@ public class DoctorManagementPanel extends JPanel {
         formCard.add(formBtnRow, BorderLayout.SOUTH);
         splitPanel.add(formCard, BorderLayout.WEST);
 
-        // --- RIGHT: DOCTOR TABLE ---
+        // --- RIGHT: TABLE ---
         JPanel rightCard = UITheme.createCardPanel();
-        rightCard.setLayout(new BorderLayout(10, 10));
+        rightCard.setLayout(new BorderLayout(12, 12));
 
         String[] cols = {"ID", "Doctor Name", "Phone", "Email", "Specialization", "License", "Fee ($)", "Available Days"};
         tableModel = new DefaultTableModel(cols, 0) {
@@ -131,10 +133,7 @@ public class DoctorManagementPanel extends JPanel {
         };
 
         doctorTable = new JTable(tableModel);
-        doctorTable.setRowHeight(24);
-        doctorTable.setFont(UITheme.FONT_REGULAR);
-        doctorTable.getTableHeader().setFont(UITheme.FONT_BOLD);
-        doctorTable.getTableHeader().setBackground(UITheme.PRIMARY_LIGHT);
+        UITheme.styleTable(doctorTable);
 
         doctorTable.getSelectionModel().addListSelectionListener(e -> {
             int selectedRow = doctorTable.getSelectedRow();
@@ -151,13 +150,15 @@ public class DoctorManagementPanel extends JPanel {
         });
 
         JScrollPane scrollPane = new JScrollPane(doctorTable);
+        scrollPane.setBorder(BorderFactory.createLineBorder(UITheme.BORDER_COLOR));
+        scrollPane.getViewport().setBackground(Color.WHITE);
         rightCard.add(scrollPane, BorderLayout.CENTER);
 
         // Bottom action
-        JPanel tableBottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JPanel tableBottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         tableBottom.setOpaque(false);
 
-        JButton btnDelete = UITheme.createDangerButton("Delete Selected Doctor");
+        ModernButton btnDelete = new ModernButton("Delete Selected Doctor", ModernButton.ButtonStyle.DANGER);
         btnDelete.addActionListener(e -> onDelete());
         tableBottom.add(btnDelete);
 
@@ -165,6 +166,23 @@ public class DoctorManagementPanel extends JPanel {
         splitPanel.add(rightCard, BorderLayout.CENTER);
 
         add(splitPanel, BorderLayout.CENTER);
+    }
+
+    private JLabel createFieldLabel(String text) {
+        JLabel l = new JLabel(text);
+        l.setFont(UITheme.FONT_BOLD);
+        l.setForeground(UITheme.TEXT_PRIMARY);
+        return l;
+    }
+
+    private JTextField createTextField() {
+        JTextField tf = new JTextField();
+        tf.setFont(UITheme.FONT_REGULAR);
+        tf.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(203, 213, 225), 1, true),
+                new EmptyBorder(5, 8, 5, 8)
+        ));
+        return tf;
     }
 
     private void onRegister() {
@@ -179,7 +197,7 @@ public class DoctorManagementPanel extends JPanel {
                     txtFee.getText(),
                     txtDays.getText()
             );
-            JOptionPane.showMessageDialog(this, "Doctor registered successfully and persisted to disk!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Doctor registered successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             clearForm();
             refreshTable();
         } catch (ValidationException ve) {
@@ -201,7 +219,7 @@ public class DoctorManagementPanel extends JPanel {
                     txtFee.getText(),
                     txtDays.getText()
             );
-            JOptionPane.showMessageDialog(this, "Doctor information updated and saved successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Doctor updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             refreshTable();
         } catch (ValidationException ve) {
             JOptionPane.showMessageDialog(this, ve.getMessage(), "Validation Error", JOptionPane.WARNING_MESSAGE);

@@ -17,7 +17,6 @@ import java.time.LocalDate;
 /**
  * Task 5 - Reports Screen.
  * Generates Appointment Reports, Doctor Schedules, and clinic statistics.
- * Allows exporting reports to disk.
  */
 public class ReportsPanel extends JPanel {
 
@@ -36,7 +35,7 @@ public class ReportsPanel extends JPanel {
 
         setLayout(new BorderLayout(15, 15));
         setBackground(UITheme.BG_MAIN);
-        setBorder(new EmptyBorder(15, 15, 15, 15));
+        setBorder(new EmptyBorder(16, 18, 18, 18));
 
         initUI();
         refreshDoctorFilter();
@@ -48,14 +47,15 @@ public class ReportsPanel extends JPanel {
         topPanel.setOpaque(false);
         JLabel lblTitle = new JLabel("Clinic Reports & Doctor Schedules");
         lblTitle.setFont(UITheme.FONT_TITLE);
+        lblTitle.setForeground(UITheme.TEXT_PRIMARY);
         topPanel.add(lblTitle, BorderLayout.WEST);
         add(topPanel, BorderLayout.NORTH);
 
-        // Control Filter Toolbar Card
+        // Filter Card
         JPanel filterCard = UITheme.createCardPanel();
-        filterCard.setLayout(new FlowLayout(FlowLayout.LEFT, 12, 8));
+        filterCard.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 4));
 
-        filterCard.add(new JLabel("Report Type:"));
+        filterCard.add(createFieldLabel("Report Type:"));
         cmbReportType = new JComboBox<>(new String[]{
                 "Appointment Report",
                 "Doctor Schedules",
@@ -63,47 +63,69 @@ public class ReportsPanel extends JPanel {
         });
         filterCard.add(cmbReportType);
 
-        filterCard.add(new JLabel("Doctor Filter:"));
+        filterCard.add(createFieldLabel("Doctor Filter:"));
         cmbDoctorFilter = new JComboBox<>();
         filterCard.add(cmbDoctorFilter);
 
-        filterCard.add(new JLabel("From:"));
-        txtFromDate = new JTextField(LocalDate.now().minusDays(30).toString(), 8);
+        filterCard.add(createFieldLabel("From:"));
+        txtFromDate = createTextField();
+        txtFromDate.setText(LocalDate.now().minusDays(30).toString());
+        txtFromDate.setPreferredSize(new Dimension(95, 32));
         filterCard.add(txtFromDate);
 
-        filterCard.add(new JLabel("To:"));
-        txtToDate = new JTextField(LocalDate.now().plusDays(30).toString(), 8);
+        filterCard.add(createFieldLabel("To:"));
+        txtToDate = createTextField();
+        txtToDate.setText(LocalDate.now().plusDays(30).toString());
+        txtToDate.setPreferredSize(new Dimension(95, 32));
         filterCard.add(txtToDate);
 
-        JButton btnGenerate = UITheme.createPrimaryButton("Generate Report");
+        ModernButton btnGenerate = new ModernButton("Generate Report", IconFactory.createReportIcon(14, Color.WHITE), ModernButton.ButtonStyle.PRIMARY);
         btnGenerate.addActionListener(e -> generateReport());
         filterCard.add(btnGenerate);
 
-        JButton btnExport = UITheme.createAccentButton("Export Report (.txt)");
+        ModernButton btnExport = new ModernButton("Export (.txt)", ModernButton.ButtonStyle.ACCENT);
         btnExport.addActionListener(e -> exportReport());
         filterCard.add(btnExport);
 
         add(filterCard, BorderLayout.NORTH);
 
-        // Report Output Area Card
+        // Output Area
         JPanel reportCard = UITheme.createCardPanel();
-        reportCard.setLayout(new BorderLayout(8, 8));
+        reportCard.setLayout(new BorderLayout(10, 10));
 
-        JLabel lblPreview = new JLabel("Report Preview Output:", SwingConstants.LEFT);
+        JLabel lblPreview = new JLabel("Report Preview", SwingConstants.LEFT);
         lblPreview.setFont(UITheme.FONT_HEADER);
+        lblPreview.setForeground(UITheme.TEXT_PRIMARY);
         reportCard.add(lblPreview, BorderLayout.NORTH);
 
         txtReportOutput = new JTextArea();
         txtReportOutput.setEditable(false);
         txtReportOutput.setFont(UITheme.FONT_MONO);
         txtReportOutput.setBackground(new Color(250, 250, 250));
-        txtReportOutput.setMargin(new Insets(10, 10, 10, 10));
+        txtReportOutput.setMargin(new Insets(14, 14, 14, 14));
 
         JScrollPane scrollPane = new JScrollPane(txtReportOutput);
         scrollPane.setBorder(BorderFactory.createLineBorder(UITheme.BORDER_COLOR));
         reportCard.add(scrollPane, BorderLayout.CENTER);
 
         add(reportCard, BorderLayout.CENTER);
+    }
+
+    private JLabel createFieldLabel(String text) {
+        JLabel l = new JLabel(text);
+        l.setFont(UITheme.FONT_BOLD);
+        l.setForeground(UITheme.TEXT_PRIMARY);
+        return l;
+    }
+
+    private JTextField createTextField() {
+        JTextField tf = new JTextField();
+        tf.setFont(UITheme.FONT_REGULAR);
+        tf.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(203, 213, 225), 1, true),
+                new EmptyBorder(5, 8, 5, 8)
+        ));
+        return tf;
     }
 
     public void refreshDoctorFilter() {

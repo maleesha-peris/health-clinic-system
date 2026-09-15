@@ -13,8 +13,7 @@ import java.util.ArrayList;
 
 /**
  * Task 5 - Register Patient & Management Screen.
- * Provides Patient registration form, update, delete, and
- * Task 8 Searching (Binary Search by ID and Linear Search).
+ * Modern UI with styled inputs, modern buttons, and Binary/Linear Search.
  */
 public class PatientManagementPanel extends JPanel {
 
@@ -41,7 +40,7 @@ public class PatientManagementPanel extends JPanel {
 
         setLayout(new BorderLayout(15, 15));
         setBackground(UITheme.BG_MAIN);
-        setBorder(new EmptyBorder(15, 15, 15, 15));
+        setBorder(new EmptyBorder(16, 18, 18, 18));
 
         initUI();
         refreshTable();
@@ -51,69 +50,71 @@ public class PatientManagementPanel extends JPanel {
         // Title Bar
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setOpaque(false);
-        JLabel lblTitle = new JLabel("Patient Registration & Management");
+        JLabel lblTitle = new JLabel("Patient Registration & Medical Records");
         lblTitle.setFont(UITheme.FONT_TITLE);
+        lblTitle.setForeground(UITheme.TEXT_PRIMARY);
         topPanel.add(lblTitle, BorderLayout.WEST);
         add(topPanel, BorderLayout.NORTH);
 
-        // Split Layout: Left Form, Right Table & Search
+        // Split Layout: Form on Left, Table on Right
         JPanel splitPanel = new JPanel(new BorderLayout(15, 15));
         splitPanel.setOpaque(false);
 
         // --- LEFT: REGISTRATION FORM ---
         JPanel formCard = UITheme.createCardPanel();
-        formCard.setLayout(new BorderLayout(10, 10));
-        formCard.setPreferredSize(new Dimension(360, 500));
+        formCard.setLayout(new BorderLayout(12, 12));
+        formCard.setPreferredSize(new Dimension(370, 500));
 
-        JLabel lblFormTitle = new JLabel("Patient Details Form");
+        JLabel lblFormTitle = new JLabel("Patient Registration Form");
         lblFormTitle.setFont(UITheme.FONT_HEADER);
+        lblFormTitle.setForeground(UITheme.TEXT_PRIMARY);
         formCard.add(lblFormTitle, BorderLayout.NORTH);
 
         JPanel fieldsPanel = new JPanel(new GridLayout(9, 2, 8, 10));
         fieldsPanel.setOpaque(false);
 
-        txtId = new JTextField();
-        txtName = new JTextField();
-        txtPhone = new JTextField();
-        txtEmail = new JTextField();
-        txtDob = new JTextField(); // YYYY-MM-DD
+        txtId = createTextField();
+        txtName = createTextField();
+        txtPhone = createTextField();
+        txtEmail = createTextField();
+        txtDob = createTextField();
         cmbGender = new JComboBox<>(new String[]{"Male", "Female", "Other"});
         cmbBloodGroup = new JComboBox<>(new String[]{"A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"});
-        txtEmergency = new JTextField();
-        txtMedicalHistory = new JTextField();
+        txtEmergency = createTextField();
+        txtMedicalHistory = createTextField();
 
-        fieldsPanel.add(new JLabel("Patient ID: *"));
+        fieldsPanel.add(createFieldLabel("Patient ID: *"));
         fieldsPanel.add(txtId);
-        fieldsPanel.add(new JLabel("Full Name: *"));
+        fieldsPanel.add(createFieldLabel("Full Name: *"));
         fieldsPanel.add(txtName);
-        fieldsPanel.add(new JLabel("Phone Number: *"));
+        fieldsPanel.add(createFieldLabel("Phone Number: *"));
         fieldsPanel.add(txtPhone);
-        fieldsPanel.add(new JLabel("Email Address: *"));
+        fieldsPanel.add(createFieldLabel("Email Address: *"));
         fieldsPanel.add(txtEmail);
-        fieldsPanel.add(new JLabel("DOB (YYYY-MM-DD): *"));
+        fieldsPanel.add(createFieldLabel("DOB (YYYY-MM-DD): *"));
         fieldsPanel.add(txtDob);
-        fieldsPanel.add(new JLabel("Gender: *"));
+        fieldsPanel.add(createFieldLabel("Gender: *"));
         fieldsPanel.add(cmbGender);
-        fieldsPanel.add(new JLabel("Blood Group: *"));
+        fieldsPanel.add(createFieldLabel("Blood Group: *"));
         fieldsPanel.add(cmbBloodGroup);
-        fieldsPanel.add(new JLabel("Emergency Contact:"));
+        fieldsPanel.add(createFieldLabel("Emergency Contact:"));
         fieldsPanel.add(txtEmergency);
-        fieldsPanel.add(new JLabel("Medical History:"));
+        fieldsPanel.add(createFieldLabel("Medical History:"));
         fieldsPanel.add(txtMedicalHistory);
 
         formCard.add(fieldsPanel, BorderLayout.CENTER);
 
-        // Form Action Buttons
+        // Buttons Row
         JPanel formBtnRow = new JPanel(new GridLayout(1, 3, 8, 0));
         formBtnRow.setOpaque(false);
 
-        JButton btnRegister = UITheme.createPrimaryButton("Register");
+        ModernButton btnRegister = new ModernButton("Register", ModernButton.ButtonStyle.PRIMARY);
         btnRegister.addActionListener(e -> onRegister());
 
-        JButton btnUpdate = UITheme.createSecondaryButton("Update");
+        ModernButton btnUpdate = new ModernButton("Update", ModernButton.ButtonStyle.SECONDARY);
         btnUpdate.addActionListener(e -> onUpdate());
 
-        JButton btnClear = UITheme.createSecondaryButton("Clear");
+        ModernButton btnClear = new ModernButton("Clear", ModernButton.ButtonStyle.SECONDARY);
         btnClear.addActionListener(e -> clearForm());
 
         formBtnRow.add(btnRegister);
@@ -123,36 +124,39 @@ public class PatientManagementPanel extends JPanel {
         formCard.add(formBtnRow, BorderLayout.SOUTH);
         splitPanel.add(formCard, BorderLayout.WEST);
 
-        // --- RIGHT: SEARCH BAR & DATA TABLE ---
+        // --- RIGHT: SEARCH BAR & TABLE ---
         JPanel rightCard = UITheme.createCardPanel();
-        rightCard.setLayout(new BorderLayout(10, 10));
+        rightCard.setLayout(new BorderLayout(12, 12));
 
-        // Search Bar (Linear & Binary Search)
-        JPanel searchBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        // Search Bar
+        JPanel searchBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         searchBar.setOpaque(false);
 
-        searchBar.add(new JLabel("Search:"));
-        txtSearchQuery = new JTextField(12);
-        searchBar.add(txtSearchQuery);
+        JLabel lblSearch = new JLabel(IconFactory.createSearchIcon(16, UITheme.TEXT_MUTED));
+        txtSearchQuery = createTextField();
+        txtSearchQuery.setPreferredSize(new Dimension(140, 32));
 
-        JButton btnBinarySearch = UITheme.createAccentButton("Binary Search (by ID)");
-        btnBinarySearch.setToolTipText("Performs O(log n) Binary Search on Patient ID");
+        ModernButton btnBinarySearch = new ModernButton("Binary Search (by ID)", IconFactory.createSearchIcon(14, Color.WHITE), ModernButton.ButtonStyle.ACCENT);
+        btnBinarySearch.setToolTipText("Performs O(log n) Binary Search by Patient ID");
         btnBinarySearch.addActionListener(e -> onBinarySearch());
-        searchBar.add(btnBinarySearch);
 
-        JButton btnLinearSearch = UITheme.createSecondaryButton("Linear Search (All)");
+        ModernButton btnLinearSearch = new ModernButton("Linear Search", ModernButton.ButtonStyle.SECONDARY);
         btnLinearSearch.setToolTipText("Performs O(n) Linear Search matching ID, Name, or Phone");
         btnLinearSearch.addActionListener(e -> onLinearSearch());
-        searchBar.add(btnLinearSearch);
 
-        JButton btnReset = UITheme.createSecondaryButton("Show All");
+        ModernButton btnReset = new ModernButton("Show All", ModernButton.ButtonStyle.SECONDARY);
         btnReset.addActionListener(e -> refreshTable());
+
+        searchBar.add(lblSearch);
+        searchBar.add(txtSearchQuery);
+        searchBar.add(btnBinarySearch);
+        searchBar.add(btnLinearSearch);
         searchBar.add(btnReset);
 
         rightCard.add(searchBar, BorderLayout.NORTH);
 
         // Table
-        String[] cols = {"ID", "Name", "Phone", "Email", "DOB", "Gender", "Blood", "Emergency", "History"};
+        String[] cols = {"ID", "Full Name", "Phone", "Email", "DOB", "Gender", "Blood", "Emergency", "History"};
         tableModel = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
@@ -161,12 +165,11 @@ public class PatientManagementPanel extends JPanel {
         };
 
         patientTable = new JTable(tableModel);
-        patientTable.setRowHeight(24);
-        patientTable.setFont(UITheme.FONT_REGULAR);
-        patientTable.getTableHeader().setFont(UITheme.FONT_BOLD);
-        patientTable.getTableHeader().setBackground(UITheme.PRIMARY_LIGHT);
+        UITheme.styleTable(patientTable);
 
-        // Selection Listener to populate form
+        // Render Gender column with pill badge
+        patientTable.getColumnModel().getColumn(5).setCellRenderer(new StatusBadgeRenderer());
+
         patientTable.getSelectionModel().addListSelectionListener(e -> {
             int selectedRow = patientTable.getSelectedRow();
             if (selectedRow >= 0) {
@@ -183,13 +186,15 @@ public class PatientManagementPanel extends JPanel {
         });
 
         JScrollPane scrollPane = new JScrollPane(patientTable);
+        scrollPane.setBorder(BorderFactory.createLineBorder(UITheme.BORDER_COLOR));
+        scrollPane.getViewport().setBackground(Color.WHITE);
         rightCard.add(scrollPane, BorderLayout.CENTER);
 
-        // Table Bottom Actions
-        JPanel tableBottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        // Table Actions
+        JPanel tableBottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         tableBottom.setOpaque(false);
 
-        JButton btnDelete = UITheme.createDangerButton("Delete Selected Patient");
+        ModernButton btnDelete = new ModernButton("Delete Selected Patient", ModernButton.ButtonStyle.DANGER);
         btnDelete.addActionListener(e -> onDelete());
         tableBottom.add(btnDelete);
 
@@ -197,6 +202,23 @@ public class PatientManagementPanel extends JPanel {
         splitPanel.add(rightCard, BorderLayout.CENTER);
 
         add(splitPanel, BorderLayout.CENTER);
+    }
+
+    private JLabel createFieldLabel(String text) {
+        JLabel l = new JLabel(text);
+        l.setFont(UITheme.FONT_BOLD);
+        l.setForeground(UITheme.TEXT_PRIMARY);
+        return l;
+    }
+
+    private JTextField createTextField() {
+        JTextField tf = new JTextField();
+        tf.setFont(UITheme.FONT_REGULAR);
+        tf.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(203, 213, 225), 1, true),
+                new EmptyBorder(5, 8, 5, 8)
+        ));
+        return tf;
     }
 
     private void onRegister() {
@@ -212,7 +234,7 @@ public class PatientManagementPanel extends JPanel {
                     txtEmergency.getText(),
                     txtMedicalHistory.getText()
             );
-            JOptionPane.showMessageDialog(this, "Patient successfully registered and saved to disk!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Patient successfully registered and saved!", "Success", JOptionPane.INFORMATION_MESSAGE);
             clearForm();
             refreshTable();
         } catch (ValidationException ve) {
@@ -235,7 +257,7 @@ public class PatientManagementPanel extends JPanel {
                     txtEmergency.getText(),
                     txtMedicalHistory.getText()
             );
-            JOptionPane.showMessageDialog(this, "Patient details updated and saved successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Patient updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             refreshTable();
         } catch (ValidationException ve) {
             JOptionPane.showMessageDialog(this, ve.getMessage(), "Validation Error", JOptionPane.WARNING_MESSAGE);
@@ -247,7 +269,7 @@ public class PatientManagementPanel extends JPanel {
     private void onDelete() {
         int selectedRow = patientTable.getSelectedRow();
         if (selectedRow < 0) {
-            JOptionPane.showMessageDialog(this, "Please select a patient from the table to delete.", "Notice", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please select a patient to delete.", "Notice", JOptionPane.WARNING_MESSAGE);
             return;
         }
         String id = (String) tableModel.getValueAt(selectedRow, 0);
@@ -267,7 +289,7 @@ public class PatientManagementPanel extends JPanel {
     private void onBinarySearch() {
         String id = txtSearchQuery.getText().trim();
         if (id.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter a Patient ID in the search box for Binary Search.", "Input Required", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please enter a Patient ID in the search box.", "Input Required", JOptionPane.WARNING_MESSAGE);
             return;
         }
 

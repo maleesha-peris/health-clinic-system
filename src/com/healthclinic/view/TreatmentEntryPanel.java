@@ -15,11 +15,10 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 
 /**
  * Task 5 - Treatment Entry Screen.
- * Provides entry of diagnoses, clinical prescriptions, treatment costs, and medical notes.
+ * Modern UI for logging clinical diagnoses, prescriptions, costs, and notes.
  */
 public class TreatmentEntryPanel extends JPanel {
 
@@ -30,7 +29,7 @@ public class TreatmentEntryPanel extends JPanel {
     private JComboBox<String> cmbAppointments;
     private JComboBox<String> cmbPatients;
     private JComboBox<String> cmbDoctors;
-    private JTextField txtDate; // YYYY-MM-DD
+    private JTextField txtDate;
     private JTextField txtDiagnosis;
     private JTextArea txtPrescription;
     private JTextField txtCost;
@@ -47,7 +46,7 @@ public class TreatmentEntryPanel extends JPanel {
 
         setLayout(new BorderLayout(15, 15));
         setBackground(UITheme.BG_MAIN);
-        setBorder(new EmptyBorder(15, 15, 15, 15));
+        setBorder(new EmptyBorder(16, 18, 18, 18));
 
         initUI();
         refreshDropdowns();
@@ -57,8 +56,9 @@ public class TreatmentEntryPanel extends JPanel {
     private void initUI() {
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setOpaque(false);
-        JLabel lblTitle = new JLabel("Treatment & Clinical Records Entry");
+        JLabel lblTitle = new JLabel("Treatment Records & Prescription Entry");
         lblTitle.setFont(UITheme.FONT_TITLE);
+        lblTitle.setForeground(UITheme.TEXT_PRIMARY);
         topPanel.add(lblTitle, BorderLayout.WEST);
         add(topPanel, BorderLayout.NORTH);
 
@@ -67,11 +67,12 @@ public class TreatmentEntryPanel extends JPanel {
 
         // --- LEFT: ENTRY FORM ---
         JPanel formCard = UITheme.createCardPanel();
-        formCard.setLayout(new BorderLayout(10, 10));
+        formCard.setLayout(new BorderLayout(12, 12));
         formCard.setPreferredSize(new Dimension(380, 520));
 
-        JLabel lblFormTitle = new JLabel("Record Clinical Treatment");
+        JLabel lblFormTitle = new JLabel("Clinical Record Details");
         lblFormTitle.setFont(UITheme.FONT_HEADER);
+        lblFormTitle.setForeground(UITheme.TEXT_PRIMARY);
         formCard.add(lblFormTitle, BorderLayout.NORTH);
 
         JPanel fieldsPanel = new JPanel(new GridBagLayout());
@@ -80,20 +81,22 @@ public class TreatmentEntryPanel extends JPanel {
         gbc.insets = new Insets(4, 4, 4, 4);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        txtTreatId = new JTextField();
+        txtTreatId = createTextField();
         cmbAppointments = new JComboBox<>();
         cmbPatients = new JComboBox<>();
         cmbDoctors = new JComboBox<>();
-        txtDate = new JTextField(LocalDate.now().format(DF));
-        txtDiagnosis = new JTextField();
+        txtDate = createTextField();
+        txtDate.setText(LocalDate.now().format(DF));
+        txtDiagnosis = createTextField();
         txtPrescription = new JTextArea(3, 20);
         txtPrescription.setLineWrap(true);
         txtPrescription.setWrapStyleWord(true);
+        txtPrescription.setFont(UITheme.FONT_REGULAR);
         JScrollPane scrollPresc = new JScrollPane(txtPrescription);
-        txtCost = new JTextField();
-        txtNotes = new JTextField();
+        scrollPresc.setBorder(BorderFactory.createLineBorder(new Color(203, 213, 225), 1));
+        txtCost = createTextField();
+        txtNotes = createTextField();
 
-        // Auto populate patient/doctor when appointment selected
         cmbAppointments.addActionListener(e -> {
             String selected = (String) cmbAppointments.getSelectedItem();
             if (selected != null && selected.contains(" - ")) {
@@ -123,10 +126,10 @@ public class TreatmentEntryPanel extends JPanel {
         JPanel btnRow = new JPanel(new GridLayout(1, 2, 8, 0));
         btnRow.setOpaque(false);
 
-        JButton btnSave = UITheme.createPrimaryButton("Save Treatment");
+        ModernButton btnSave = new ModernButton("Save Treatment", IconFactory.createPillIcon(14, Color.WHITE), ModernButton.ButtonStyle.PRIMARY);
         btnSave.addActionListener(e -> onSave());
 
-        JButton btnClear = UITheme.createSecondaryButton("Clear Form");
+        ModernButton btnClear = new ModernButton("Clear Form", ModernButton.ButtonStyle.SECONDARY);
         btnClear.addActionListener(e -> clearForm());
 
         btnRow.add(btnSave);
@@ -135,12 +138,13 @@ public class TreatmentEntryPanel extends JPanel {
         formCard.add(btnRow, BorderLayout.SOUTH);
         splitPanel.add(formCard, BorderLayout.WEST);
 
-        // --- RIGHT: TABLE VIEW ---
+        // --- RIGHT: TABLE ---
         JPanel rightCard = UITheme.createCardPanel();
-        rightCard.setLayout(new BorderLayout(10, 10));
+        rightCard.setLayout(new BorderLayout(12, 12));
 
         JLabel lblTableTitle = new JLabel("Treatment History Log", SwingConstants.LEFT);
         lblTableTitle.setFont(UITheme.FONT_HEADER);
+        lblTableTitle.setForeground(UITheme.TEXT_PRIMARY);
         rightCard.add(lblTableTitle, BorderLayout.NORTH);
 
         String[] cols = {"ID", "Appt", "Patient", "Doctor", "Date", "Diagnosis", "Prescription", "Cost ($)", "Notes"};
@@ -152,19 +156,18 @@ public class TreatmentEntryPanel extends JPanel {
         };
 
         treatTable = new JTable(tableModel);
-        treatTable.setRowHeight(24);
-        treatTable.setFont(UITheme.FONT_REGULAR);
-        treatTable.getTableHeader().setFont(UITheme.FONT_BOLD);
-        treatTable.getTableHeader().setBackground(UITheme.PRIMARY_LIGHT);
+        UITheme.styleTable(treatTable);
 
         JScrollPane scrollPane = new JScrollPane(treatTable);
+        scrollPane.setBorder(BorderFactory.createLineBorder(UITheme.BORDER_COLOR));
+        scrollPane.getViewport().setBackground(Color.WHITE);
         rightCard.add(scrollPane, BorderLayout.CENTER);
 
-        // Bottom delete button
-        JPanel bottomRow = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        // Bottom delete
+        JPanel bottomRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         bottomRow.setOpaque(false);
 
-        JButton btnDelete = UITheme.createDangerButton("Delete Selected Treatment");
+        ModernButton btnDelete = new ModernButton("Delete Selected Treatment", ModernButton.ButtonStyle.DANGER);
         btnDelete.addActionListener(e -> onDelete());
         bottomRow.add(btnDelete);
 
@@ -178,11 +181,24 @@ public class TreatmentEntryPanel extends JPanel {
         gbc.gridx = 0;
         gbc.gridy = row;
         gbc.weightx = 0.3;
-        panel.add(new JLabel(label), gbc);
+        JLabel l = new JLabel(label);
+        l.setFont(UITheme.FONT_BOLD);
+        l.setForeground(UITheme.TEXT_PRIMARY);
+        panel.add(l, gbc);
 
         gbc.gridx = 1;
         gbc.weightx = 0.7;
         panel.add(comp, gbc);
+    }
+
+    private JTextField createTextField() {
+        JTextField tf = new JTextField();
+        tf.setFont(UITheme.FONT_REGULAR);
+        tf.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(203, 213, 225), 1, true),
+                new EmptyBorder(5, 8, 5, 8)
+        ));
+        return tf;
     }
 
     public void refreshDropdowns() {
@@ -249,7 +265,7 @@ public class TreatmentEntryPanel extends JPanel {
                     txtNotes.getText()
             );
 
-            JOptionPane.showMessageDialog(this, "Treatment record logged and saved successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Treatment record saved successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             clearForm();
             refreshTable();
             refreshDropdowns();

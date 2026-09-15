@@ -18,8 +18,7 @@ import java.util.ArrayList;
 
 /**
  * Task 5 - Appointment Booking Screen.
- * Provides appointment scheduling, cancellation, status tracking,
- * searching, and Task 8 Quick Sort by Date.
+ * Features appointment scheduling, Quick Sort by date, and status pill badges.
  */
 public class AppointmentBookingPanel extends JPanel {
 
@@ -29,7 +28,7 @@ public class AppointmentBookingPanel extends JPanel {
     private JTextField txtApptId;
     private JComboBox<String> cmbPatients;
     private JComboBox<String> cmbDoctors;
-    private JTextField txtDateTime; // YYYY-MM-DD HH:mm
+    private JTextField txtDateTime;
     private JTextField txtNotes;
     private JComboBox<String> cmbStatus;
 
@@ -45,7 +44,7 @@ public class AppointmentBookingPanel extends JPanel {
 
         setLayout(new BorderLayout(15, 15));
         setBackground(UITheme.BG_MAIN);
-        setBorder(new EmptyBorder(15, 15, 15, 15));
+        setBorder(new EmptyBorder(16, 18, 18, 18));
 
         initUI();
         refreshDropdowns();
@@ -53,11 +52,11 @@ public class AppointmentBookingPanel extends JPanel {
     }
 
     private void initUI() {
-        // Top Header
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setOpaque(false);
-        JLabel lblTitle = new JLabel("Appointment Scheduling & Management");
+        JLabel lblTitle = new JLabel("Appointment Booking & Scheduling");
         lblTitle.setFont(UITheme.FONT_TITLE);
+        lblTitle.setForeground(UITheme.TEXT_PRIMARY);
         topPanel.add(lblTitle, BorderLayout.WEST);
         add(topPanel, BorderLayout.NORTH);
 
@@ -66,34 +65,36 @@ public class AppointmentBookingPanel extends JPanel {
 
         // --- LEFT: BOOKING FORM ---
         JPanel formCard = UITheme.createCardPanel();
-        formCard.setLayout(new BorderLayout(10, 10));
-        formCard.setPreferredSize(new Dimension(360, 480));
+        formCard.setLayout(new BorderLayout(12, 12));
+        formCard.setPreferredSize(new Dimension(370, 490));
 
-        JLabel lblFormTitle = new JLabel("Schedule New Appointment");
+        JLabel lblFormTitle = new JLabel("Schedule Appointment");
         lblFormTitle.setFont(UITheme.FONT_HEADER);
+        lblFormTitle.setForeground(UITheme.TEXT_PRIMARY);
         formCard.add(lblFormTitle, BorderLayout.NORTH);
 
         JPanel fieldsPanel = new JPanel(new GridLayout(6, 2, 8, 12));
         fieldsPanel.setOpaque(false);
 
-        txtApptId = new JTextField();
+        txtApptId = createTextField();
         cmbPatients = new JComboBox<>();
         cmbDoctors = new JComboBox<>();
-        txtDateTime = new JTextField(LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).format(DTF));
+        txtDateTime = createTextField();
+        txtDateTime.setText(LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).format(DTF));
         cmbStatus = new JComboBox<>(new String[]{"SCHEDULED", "COMPLETED", "CANCELLED"});
-        txtNotes = new JTextField();
+        txtNotes = createTextField();
 
-        fieldsPanel.add(new JLabel("Appointment ID: *"));
+        fieldsPanel.add(createFieldLabel("Appointment ID: *"));
         fieldsPanel.add(txtApptId);
-        fieldsPanel.add(new JLabel("Select Patient: *"));
+        fieldsPanel.add(createFieldLabel("Select Patient: *"));
         fieldsPanel.add(cmbPatients);
-        fieldsPanel.add(new JLabel("Select Doctor: *"));
+        fieldsPanel.add(createFieldLabel("Select Doctor: *"));
         fieldsPanel.add(cmbDoctors);
-        fieldsPanel.add(new JLabel("Date & Time: *"));
+        fieldsPanel.add(createFieldLabel("Date & Time: *"));
         fieldsPanel.add(txtDateTime);
-        fieldsPanel.add(new JLabel("Status:"));
+        fieldsPanel.add(createFieldLabel("Status:"));
         fieldsPanel.add(cmbStatus);
-        fieldsPanel.add(new JLabel("Reason / Notes:"));
+        fieldsPanel.add(createFieldLabel("Reason / Notes:"));
         fieldsPanel.add(txtNotes);
 
         formCard.add(fieldsPanel, BorderLayout.CENTER);
@@ -102,19 +103,19 @@ public class AppointmentBookingPanel extends JPanel {
         JPanel btnCol = new JPanel(new GridLayout(3, 1, 6, 8));
         btnCol.setOpaque(false);
 
-        JButton btnBook = UITheme.createPrimaryButton("Book Appointment");
+        ModernButton btnBook = new ModernButton("Book Appointment", IconFactory.createCalendarIcon(14, Color.WHITE), ModernButton.ButtonStyle.PRIMARY);
         btnBook.addActionListener(e -> onBook());
 
         JPanel statusBtnRow = new JPanel(new GridLayout(1, 2, 6, 0));
         statusBtnRow.setOpaque(false);
-        JButton btnComplete = UITheme.createAccentButton("Mark Completed");
+        ModernButton btnComplete = new ModernButton("Mark Completed", ModernButton.ButtonStyle.SUCCESS);
         btnComplete.addActionListener(e -> onUpdateStatus("COMPLETED"));
-        JButton btnCancelAppt = UITheme.createSecondaryButton("Mark Cancelled");
+        ModernButton btnCancelAppt = new ModernButton("Mark Cancelled", ModernButton.ButtonStyle.SECONDARY);
         btnCancelAppt.addActionListener(e -> onUpdateStatus("CANCELLED"));
         statusBtnRow.add(btnComplete);
         statusBtnRow.add(btnCancelAppt);
 
-        JButton btnClear = UITheme.createSecondaryButton("Clear Form");
+        ModernButton btnClear = new ModernButton("Clear Form", ModernButton.ButtonStyle.SECONDARY);
         btnClear.addActionListener(e -> clearForm());
 
         btnCol.add(btnBook);
@@ -124,28 +125,29 @@ public class AppointmentBookingPanel extends JPanel {
         formCard.add(btnCol, BorderLayout.SOUTH);
         splitPanel.add(formCard, BorderLayout.WEST);
 
-        // --- RIGHT: APPOINTMENTS TABLE & SORT/SEARCH CONTROLS ---
+        // --- RIGHT: APPOINTMENTS TABLE ---
         JPanel rightCard = UITheme.createCardPanel();
-        rightCard.setLayout(new BorderLayout(10, 10));
+        rightCard.setLayout(new BorderLayout(12, 12));
 
-        // Control Toolbar
-        JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        // Toolbar
+        JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         toolbar.setOpaque(false);
 
-        JButton btnSortQuick = UITheme.createAccentButton("Sort by Date (Quick Sort)");
-        btnSortQuick.setToolTipText("Sorts appointments chronologically using O(n log n) Quick Sort algorithm");
+        ModernButton btnSortQuick = new ModernButton("Sort by Date (Quick Sort)", IconFactory.createSortIcon(14, Color.WHITE), ModernButton.ButtonStyle.ACCENT);
+        btnSortQuick.setToolTipText("Sorts appointments chronologically using O(n log n) Quick Sort");
         btnSortQuick.addActionListener(e -> onQuickSort());
         toolbar.add(btnSortQuick);
 
         toolbar.add(new JLabel("  Filter:"));
-        txtSearch = new JTextField(10);
+        txtSearch = createTextField();
+        txtSearch.setPreferredSize(new Dimension(110, 32));
         toolbar.add(txtSearch);
 
-        JButton btnSearch = UITheme.createSecondaryButton("Search");
+        ModernButton btnSearch = new ModernButton("Search", ModernButton.ButtonStyle.SECONDARY);
         btnSearch.addActionListener(e -> onSearch());
         toolbar.add(btnSearch);
 
-        JButton btnRefresh = UITheme.createSecondaryButton("Refresh All");
+        ModernButton btnRefresh = new ModernButton("Refresh", ModernButton.ButtonStyle.SECONDARY);
         btnRefresh.addActionListener(e -> {
             refreshDropdowns();
             refreshTable();
@@ -164,10 +166,10 @@ public class AppointmentBookingPanel extends JPanel {
         };
 
         apptTable = new JTable(tableModel);
-        apptTable.setRowHeight(24);
-        apptTable.setFont(UITheme.FONT_REGULAR);
-        apptTable.getTableHeader().setFont(UITheme.FONT_BOLD);
-        apptTable.getTableHeader().setBackground(UITheme.PRIMARY_LIGHT);
+        UITheme.styleTable(apptTable);
+
+        // Render Status with colored pill badges
+        apptTable.getColumnModel().getColumn(4).setCellRenderer(new StatusBadgeRenderer());
 
         apptTable.getSelectionModel().addListSelectionListener(e -> {
             int selectedRow = apptTable.getSelectedRow();
@@ -180,13 +182,15 @@ public class AppointmentBookingPanel extends JPanel {
         });
 
         JScrollPane scrollPane = new JScrollPane(apptTable);
+        scrollPane.setBorder(BorderFactory.createLineBorder(UITheme.BORDER_COLOR));
+        scrollPane.getViewport().setBackground(Color.WHITE);
         rightCard.add(scrollPane, BorderLayout.CENTER);
 
         // Bottom Actions
-        JPanel bottomRow = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JPanel bottomRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         bottomRow.setOpaque(false);
 
-        JButton btnDelete = UITheme.createDangerButton("Delete Selected Appointment");
+        ModernButton btnDelete = new ModernButton("Delete Selected Appointment", ModernButton.ButtonStyle.DANGER);
         btnDelete.addActionListener(e -> onDelete());
         bottomRow.add(btnDelete);
 
@@ -194,6 +198,23 @@ public class AppointmentBookingPanel extends JPanel {
         splitPanel.add(rightCard, BorderLayout.CENTER);
 
         add(splitPanel, BorderLayout.CENTER);
+    }
+
+    private JLabel createFieldLabel(String text) {
+        JLabel l = new JLabel(text);
+        l.setFont(UITheme.FONT_BOLD);
+        l.setForeground(UITheme.TEXT_PRIMARY);
+        return l;
+    }
+
+    private JTextField createTextField() {
+        JTextField tf = new JTextField();
+        tf.setFont(UITheme.FONT_REGULAR);
+        tf.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(203, 213, 225), 1, true),
+                new EmptyBorder(5, 8, 5, 8)
+        ));
+        return tf;
     }
 
     public void refreshDropdowns() {
@@ -229,7 +250,7 @@ public class AppointmentBookingPanel extends JPanel {
                     txtNotes.getText()
             );
 
-            JOptionPane.showMessageDialog(this, "Appointment scheduled and saved successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Appointment booked successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             clearForm();
             refreshTable();
         } catch (ValidationException ve) {
@@ -242,7 +263,7 @@ public class AppointmentBookingPanel extends JPanel {
     private void onUpdateStatus(String newStatus) {
         int selectedRow = apptTable.getSelectedRow();
         if (selectedRow < 0) {
-            JOptionPane.showMessageDialog(this, "Please select an appointment from the table first.", "Notice", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please select an appointment first.", "Notice", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -288,9 +309,9 @@ public class AppointmentBookingPanel extends JPanel {
         }
 
         JOptionPane.showMessageDialog(this,
-                "Quick Sort completed in " + (duration / 1000.0) + " μs!\n" +
-                "All " + sorted.size() + " appointments are now ordered chronologically by date/time.",
-                "Quick Sort Executed", JOptionPane.INFORMATION_MESSAGE);
+                "Quick Sort executed in " + (duration / 1000.0) + " μs!\n" +
+                "All " + sorted.size() + " appointments sorted chronologically.",
+                "Quick Sort", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void onSearch() {
@@ -305,7 +326,7 @@ public class AppointmentBookingPanel extends JPanel {
             addAppointmentRow(a);
         }
         if (results.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No appointments matched your query: " + q, "Search Results", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "No appointments matched query: " + q, "Search Results", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 

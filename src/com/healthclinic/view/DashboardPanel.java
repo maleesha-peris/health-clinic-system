@@ -13,17 +13,17 @@ import java.util.ArrayList;
 
 /**
  * Task 5 - Main Menu / Dashboard Screen.
- * Provides high-level clinic metrics, quick action navigation, and recent appointments overview.
+ * Features gradient metric cards, quick action buttons, and
+ * a clean modern table with status badges (matching reference UI).
  */
 public class DashboardPanel extends JPanel {
 
     private final ClinicController clinicController;
     private final MainFrame mainFrame;
 
-    private JLabel lblTotalPatients;
-    private JLabel lblTotalDoctors;
-    private JLabel lblScheduledAppts;
-    private JLabel lblCompletedTreatments;
+    private GradientCardPanel cardPatients;
+    private GradientCardPanel cardDoctors;
+    private GradientCardPanel cardAppointments;
 
     private JTable recentTable;
     private DefaultTableModel recentModel;
@@ -31,160 +31,135 @@ public class DashboardPanel extends JPanel {
     public DashboardPanel(ClinicController clinicController, MainFrame mainFrame) {
         this.clinicController = clinicController;
         this.mainFrame = mainFrame;
-        setLayout(new BorderLayout(15, 15));
+
+        setLayout(new BorderLayout(18, 18));
         setBackground(UITheme.BG_MAIN);
-        setBorder(new EmptyBorder(20, 20, 20, 20));
+        setBorder(new EmptyBorder(18, 20, 20, 20));
 
         initUI();
         refreshData();
     }
 
     private void initUI() {
-        // Top Header
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setOpaque(false);
-
-        JLabel lblTitle = new JLabel("Clinic Overview & Main Menu");
-        lblTitle.setFont(UITheme.FONT_TITLE);
-        lblTitle.setForeground(UITheme.TEXT_PRIMARY);
-
-        JLabel lblSubtitle = new JLabel("Community Health Clinic • Patient Appointments & Medical Records Management");
-        lblSubtitle.setFont(UITheme.FONT_REGULAR);
-        lblSubtitle.setForeground(UITheme.TEXT_MUTED);
-
-        topPanel.add(lblTitle, BorderLayout.NORTH);
-        topPanel.add(lblSubtitle, BorderLayout.SOUTH);
-        add(topPanel, BorderLayout.NORTH);
-
-        // Center Content
-        JPanel centerPanel = new JPanel(new BorderLayout(15, 15));
-        centerPanel.setOpaque(false);
-
-        // KPI Metric Cards
-        JPanel metricsPanel = new JPanel(new GridLayout(1, 4, 15, 0));
+        // --- TOP ROW: 3 GRADIENT METRIC CARDS (Exact match to reference design) ---
+        JPanel metricsPanel = new JPanel(new GridLayout(1, 3, 16, 0));
         metricsPanel.setOpaque(false);
+        metricsPanel.setPreferredSize(new Dimension(800, 135));
 
-        lblTotalPatients = new JLabel("0", SwingConstants.CENTER);
-        lblTotalDoctors = new JLabel("0", SwingConstants.CENTER);
-        lblScheduledAppts = new JLabel("0", SwingConstants.CENTER);
-        lblCompletedTreatments = new JLabel("0", SwingConstants.CENTER);
+        // 1. Blue-Indigo Card
+        cardPatients = new GradientCardPanel(
+                "Total Registered Patients",
+                "0",
+                "Community clinic database",
+                new Color(79, 110, 247), // #4F6EF7
+                new Color(108, 92, 231), // #6C5CE7
+                IconFactory.createPatientIcon(18, Color.WHITE)
+        );
 
-        metricsPanel.add(createMetricCard("Registered Patients", lblTotalPatients, UITheme.PRIMARY));
-        metricsPanel.add(createMetricCard("Active Doctors", lblTotalDoctors, UITheme.ACCENT));
-        metricsPanel.add(createMetricCard("Scheduled Appts", lblScheduledAppts, UITheme.WARNING));
-        metricsPanel.add(createMetricCard("Completed Treatments", lblCompletedTreatments, UITheme.SUCCESS));
+        // 2. Purple-Violet Card
+        cardDoctors = new GradientCardPanel(
+                "Active Clinic Doctors",
+                "0",
+                "Consultants & specialists",
+                new Color(156, 39, 176), // #9C27B0
+                new Color(186, 104, 200), // #BA68C8
+                IconFactory.createDoctorIcon(18, Color.WHITE)
+        );
 
-        centerPanel.add(metricsPanel, BorderLayout.NORTH);
+        // 3. Golden-Amber Card
+        cardAppointments = new GradientCardPanel(
+                "Scheduled Appointments",
+                "0",
+                "Organized chronologically",
+                new Color(230, 162, 25), // #E6A219
+                new Color(246, 194, 62), // #F6C23E
+                IconFactory.createCalendarIcon(18, Color.WHITE)
+        );
 
-        // Quick Actions & Recent Appointments Split
-        JPanel contentGrid = new JPanel(new BorderLayout(15, 15));
-        contentGrid.setOpaque(false);
+        metricsPanel.add(cardPatients);
+        metricsPanel.add(cardDoctors);
+        metricsPanel.add(cardAppointments);
 
-        // Left: Quick Action Navigation Buttons
-        JPanel actionCard = UITheme.createCardPanel();
-        actionCard.setLayout(new GridLayout(4, 1, 10, 10));
-        actionCard.setPreferredSize(new Dimension(280, 200));
+        add(metricsPanel, BorderLayout.NORTH);
 
-        JLabel lblActions = new JLabel("Quick Navigation", SwingConstants.LEFT);
-        lblActions.setFont(UITheme.FONT_HEADER);
+        // --- CENTER: STANDARD TABLE DESIGN CARD (Matching reference image) ---
+        JPanel centerCard = UITheme.createCardPanel();
+        centerCard.setLayout(new BorderLayout(12, 12));
 
-        JButton btnGoPatient = UITheme.createPrimaryButton("Register New Patient");
-        btnGoPatient.addActionListener(e -> mainFrame.showView("PATIENTS"));
+        // Header above table
+        JPanel tableHeaderPanel = new JPanel(new BorderLayout());
+        tableHeaderPanel.setOpaque(false);
 
-        JButton btnGoDoctor = UITheme.createSecondaryButton("Register New Doctor");
-        btnGoDoctor.addActionListener(e -> mainFrame.showView("DOCTORS"));
+        JLabel lblTableHeader = new JLabel("Standard Table Design");
+        lblTableHeader.setFont(new Font("Segoe UI", Font.BOLD, 17));
+        lblTableHeader.setForeground(UITheme.TEXT_PRIMARY);
 
-        JButton btnGoAppt = UITheme.createAccentButton("Book Appointment");
-        btnGoAppt.addActionListener(e -> mainFrame.showView("APPOINTMENTS"));
+        JPanel quickActions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        quickActions.setOpaque(false);
 
-        JButton btnGoReports = UITheme.createSecondaryButton("View Reports & Schedules");
-        btnGoReports.addActionListener(e -> mainFrame.showView("REPORTS"));
+        ModernButton btnBookQuick = new ModernButton("Book New Appointment", IconFactory.createCalendarIcon(14, Color.WHITE), ModernButton.ButtonStyle.PRIMARY);
+        btnBookQuick.addActionListener(e -> mainFrame.showView("APPOINTMENTS"));
 
-        actionCard.add(btnGoPatient);
-        actionCard.add(btnGoDoctor);
-        actionCard.add(btnGoAppt);
-        actionCard.add(btnGoReports);
+        ModernButton btnAddPatient = new ModernButton("Register Patient", IconFactory.createPatientIcon(14, Color.WHITE), ModernButton.ButtonStyle.ACCENT);
+        btnAddPatient.addActionListener(e -> mainFrame.showView("PATIENTS"));
 
-        JPanel leftWrap = new JPanel(new BorderLayout());
-        leftWrap.setOpaque(false);
-        leftWrap.add(lblActions, BorderLayout.NORTH);
-        leftWrap.add(actionCard, BorderLayout.CENTER);
+        quickActions.add(btnBookQuick);
+        quickActions.add(btnAddPatient);
 
-        contentGrid.add(leftWrap, BorderLayout.WEST);
+        tableHeaderPanel.add(lblTableHeader, BorderLayout.WEST);
+        tableHeaderPanel.add(quickActions, BorderLayout.EAST);
 
-        // Right: Recent Appointments Table
-        JPanel tableCard = UITheme.createCardPanel();
-        tableCard.setLayout(new BorderLayout(10, 10));
+        centerCard.add(tableHeaderPanel, BorderLayout.NORTH);
 
-        JLabel lblRecent = new JLabel("Upcoming Appointments Schedule", SwingConstants.LEFT);
-        lblRecent.setFont(UITheme.FONT_HEADER);
-
-        String[] cols = {"Appt ID", "Date & Time", "Patient", "Doctor", "Status"};
+        // Table
+        String[] cols = {"Appt ID", "Patient Name", "Doctor Assigned", "Scheduled Date & Time", "Status"};
         recentModel = new DefaultTableModel(cols, 0) {
             @Override
-            public boolean isCellEditable(int row, int column) {
+            public boolean isCellEditable(int row, int col) {
                 return false;
             }
         };
 
         recentTable = new JTable(recentModel);
-        recentTable.setFont(UITheme.FONT_REGULAR);
-        recentTable.setRowHeight(26);
-        recentTable.getTableHeader().setFont(UITheme.FONT_BOLD);
-        recentTable.getTableHeader().setBackground(UITheme.PRIMARY_LIGHT);
+        UITheme.styleTable(recentTable);
+
+        // Apply Status Badge Renderer to the "Status" column (Column 4)
+        recentTable.getColumnModel().getColumn(4).setCellRenderer(new StatusBadgeRenderer());
+        recentTable.getColumnModel().getColumn(4).setPreferredWidth(120);
 
         JScrollPane scrollPane = new JScrollPane(recentTable);
         scrollPane.setBorder(BorderFactory.createLineBorder(UITheme.BORDER_COLOR));
+        scrollPane.getViewport().setBackground(Color.WHITE);
 
-        tableCard.add(lblRecent, BorderLayout.NORTH);
-        tableCard.add(scrollPane, BorderLayout.CENTER);
+        centerCard.add(scrollPane, BorderLayout.CENTER);
 
-        contentGrid.add(tableCard, BorderLayout.CENTER);
-        centerPanel.add(contentGrid, BorderLayout.CENTER);
-
-        add(centerPanel, BorderLayout.CENTER);
-    }
-
-    private JPanel createMetricCard(String title, JLabel valueLabel, Color accentColor) {
-        JPanel card = UITheme.createCardPanel();
-        card.setLayout(new BorderLayout(5, 5));
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 4, 0, 0, accentColor),
-                new EmptyBorder(12, 16, 12, 16)
-        ));
-
-        JLabel lblTitle = new JLabel(title);
-        lblTitle.setFont(UITheme.FONT_REGULAR);
-        lblTitle.setForeground(UITheme.TEXT_MUTED);
-
-        valueLabel.setFont(new Font("Segoe UI", Font.BOLD, 26));
-        valueLabel.setForeground(accentColor);
-
-        card.add(lblTitle, BorderLayout.NORTH);
-        card.add(valueLabel, BorderLayout.CENTER);
-        return card;
+        add(centerCard, BorderLayout.CENTER);
     }
 
     public void refreshData() {
         Clinic clinic = clinicController.getClinic();
-        lblTotalPatients.setText(String.valueOf(clinic.getPatients().size()));
-        lblTotalDoctors.setText(String.valueOf(clinic.getDoctors().size()));
 
-        long scheduled = clinic.getAppointments().stream()
+        int pCount = clinic.getPatients().size();
+        int dCount = clinic.getDoctors().size();
+        long scheduledCount = clinic.getAppointments().stream()
                 .filter(a -> "SCHEDULED".equalsIgnoreCase(a.getStatus()))
                 .count();
-        lblScheduledAppts.setText(String.valueOf(scheduled));
 
-        lblCompletedTreatments.setText(String.valueOf(clinic.getTreatments().size()));
+        cardPatients.setValue(String.valueOf(pCount));
+        cardPatients.setSubtitle(pCount + " Registered active patients");
+
+        cardDoctors.setValue(String.valueOf(dCount));
+        cardDoctors.setSubtitle(dCount + " Consulting doctors on roster");
+
+        cardAppointments.setValue(String.valueOf(scheduledCount));
+        cardAppointments.setSubtitle(scheduledCount + " Pending upcoming sessions");
 
         // Populate table
         recentModel.setRowCount(0);
         ArrayList<Appointment> sorted = clinicController.getAppointmentController().getAppointmentsSortedByDate();
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd MMM, yyyy HH:mm");
 
-        int limit = Math.min(10, sorted.size());
-        for (int i = 0; i < limit; i++) {
-            Appointment a = sorted.get(i);
+        for (Appointment a : sorted) {
             var p = clinic.findPatientById(a.getPatientId());
             var d = clinic.findDoctorById(a.getDoctorId());
 
@@ -194,9 +169,9 @@ public class DashboardPanel extends JPanel {
 
             recentModel.addRow(new Object[]{
                     a.getAppointmentId(),
-                    dtStr,
                     pName,
                     dName,
+                    dtStr,
                     a.getStatus()
             });
         }
