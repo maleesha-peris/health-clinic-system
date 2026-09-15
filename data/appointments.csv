@@ -1,0 +1,5 @@
+appointmentId,patientId,doctorId,appointmentDateTime,status,notes
+A301,P101,D201,2026-09-16 09:30,SCHEDULED,Routine checkup and lung auscultation
+A302,P102,D202,2026-09-16 11:00,SCHEDULED,Unexplained joint pain consult
+A303,P103,D201,2026-09-15 14:00,COMPLETED,Seasonal allergy evaluation
+A304,P104,D203,2026-09-18 10:15,SCHEDULED,Pre-op surgical consultation

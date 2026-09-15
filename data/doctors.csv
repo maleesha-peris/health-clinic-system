@@ -1,0 +1,4 @@
+id,name,phone,email,specialization,licenseNumber,consultationFee,availableDays
+D201,Sarah Connor,555-0201,s.connor@clinic.com,General Practice,LIC-8831,60.0,"Mon, Tue, Wed, Thu, Fri"
+D202,Gregory House,555-0202,g.house@clinic.com,Diagnostic Medicine,LIC-7412,120.0,"Tue, Thu"
+D203,Meredith Grey,555-0203,m.grey@clinic.com,General Surgery,LIC-9954,95.0,"Mon, Wed, Fri"

@@ -1,0 +1,2 @@
+treatmentId,appointmentId,patientId,doctorId,treatmentDate,diagnosis,prescription,cost,notes
+T401,A303,P103,D201,2026-09-15,Seasonal Allergic Rhinitis,Cetirizine 10mg daily x 14 days,60.0,Avoid exposure to fresh pollen.
