@@ -11,8 +11,8 @@ import java.time.format.DateTimeFormatter;
 
 /**
  * Task 5 - Main Desktop Application Frame.
- * Modern UI with responsive sidebar navigation, top search bar,
- * status indicator, and CardLayout view transitions.
+ * Modern UI with responsive sidebar navigation, top search bar with persistent placeholder,
+ * exit button, and CardLayout view transitions.
  */
 public class MainFrame extends JFrame {
 
@@ -21,7 +21,7 @@ public class MainFrame extends JFrame {
     private CardLayout cardLayout;
     private JPanel mainContentPanel;
     private JLabel lblStatus;
-    private JTextField txtGlobalSearch;
+    private PlaceholderTextField txtGlobalSearch;
 
     // View Panels
     private DashboardPanel dashboardPanel;
@@ -43,9 +43,16 @@ public class MainFrame extends JFrame {
         this.clinicController = clinicController;
 
         setTitle("HealthClinic - Community Care System");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1260, 820);
-        setMinimumSize(new Dimension(1050, 680));
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                confirmAndExit();
+            }
+        });
+
+        setSize(1280, 840);
+        setMinimumSize(new Dimension(1080, 700));
         setLocationRelativeTo(null);
 
         initMenuBar();
@@ -68,7 +75,7 @@ public class MainFrame extends JFrame {
         itemReload.addActionListener(e -> onReloadAll());
 
         JMenuItem itemExit = new JMenuItem("Exit Application");
-        itemExit.addActionListener(e -> System.exit(0));
+        itemExit.addActionListener(e -> confirmAndExit());
 
         fileMenu.add(itemSave);
         fileMenu.add(itemReload);
@@ -130,7 +137,7 @@ public class MainFrame extends JFrame {
         sidebar.setPreferredSize(new Dimension(230, 700));
 
         // Brand Banner
-        JPanel brandPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 20));
+        JPanel brandPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 18));
         brandPanel.setOpaque(false);
 
         JLabel lblLogo = new JLabel(IconFactory.createLogoIcon(32));
@@ -156,7 +163,7 @@ public class MainFrame extends JFrame {
         JPanel navCenter = new JPanel();
         navCenter.setOpaque(false);
         navCenter.setLayout(new BoxLayout(navCenter, BoxLayout.Y_AXIS));
-        navCenter.setBorder(new EmptyBorder(10, 12, 10, 12));
+        navCenter.setBorder(new EmptyBorder(6, 12, 6, 12));
 
         JLabel lblMenuHead = new JLabel("MAIN MENU");
         lblMenuHead.setFont(new Font("Segoe UI", Font.BOLD, 10));
@@ -172,7 +179,7 @@ public class MainFrame extends JFrame {
         btnNavTreatments = new ModernButton("Treatment Entry", IconFactory.createPillIcon(16, Color.WHITE), ModernButton.ButtonStyle.SIDEBAR);
         btnNavReports = new ModernButton("Reports & Rosters", IconFactory.createReportIcon(16, Color.WHITE), ModernButton.ButtonStyle.SIDEBAR);
 
-        Dimension btnSize = new Dimension(206, 42);
+        Dimension btnSize = new Dimension(206, 40);
         for (ModernButton b : new ModernButton[]{btnNavDash, btnNavPatients, btnNavDoctors, btnNavAppts, btnNavTreatments, btnNavReports}) {
             b.setMaximumSize(btnSize);
             b.setPreferredSize(btnSize);
@@ -198,7 +205,7 @@ public class MainFrame extends JFrame {
         navCenter.add(Box.createVerticalStrut(4));
         navCenter.add(btnNavReports);
 
-        navCenter.add(Box.createVerticalStrut(15));
+        navCenter.add(Box.createVerticalStrut(14));
         JLabel lblDataHead = new JLabel("DATA MANAGEMENT");
         lblDataHead.setFont(new Font("Segoe UI", Font.BOLD, 10));
         lblDataHead.setForeground(new Color(180, 215, 240, 180));
@@ -214,6 +221,18 @@ public class MainFrame extends JFrame {
         navCenter.add(btnQuickSave);
 
         sidebar.add(navCenter, BorderLayout.CENTER);
+
+        // Sidebar Footer with Exit Button
+        JPanel sideFooter = new JPanel(new BorderLayout());
+        sideFooter.setOpaque(false);
+        sideFooter.setBorder(new EmptyBorder(10, 12, 16, 12));
+
+        ModernButton btnExit = new ModernButton("Exit System", ModernButton.ButtonStyle.DANGER);
+        btnExit.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btnExit.addActionListener(e -> confirmAndExit());
+        sideFooter.add(btnExit, BorderLayout.CENTER);
+
+        sidebar.add(sideFooter, BorderLayout.SOUTH);
         getContentPane().add(sidebar, BorderLayout.WEST);
 
         // 2. TOP APP BAR & CENTER CONTAINER
@@ -229,25 +248,11 @@ public class MainFrame extends JFrame {
                 new EmptyBorder(8, 20, 8, 20)
         ));
 
-        // Global Search on left of Top Bar (matching reference image)
+        // Global Search with Persistent Placeholder (Fixes user reported issue!)
         JPanel searchBox = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         searchBox.setOpaque(false);
         JLabel searchIcon = new JLabel(IconFactory.createSearchIcon(16, UITheme.TEXT_MUTED));
-        txtGlobalSearch = new JTextField("Search patients, appointments, doctors...", 25);
-        txtGlobalSearch.setFont(UITheme.FONT_REGULAR);
-        txtGlobalSearch.setForeground(UITheme.TEXT_MUTED);
-        txtGlobalSearch.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(226, 232, 240), 1, true),
-                new EmptyBorder(4, 8, 4, 8)
-        ));
-        txtGlobalSearch.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusGained(java.awt.event.FocusEvent evt) {
-                if (txtGlobalSearch.getText().startsWith("Search")) {
-                    txtGlobalSearch.setText("");
-                    txtGlobalSearch.setForeground(UITheme.TEXT_PRIMARY);
-                }
-            }
-        });
+        txtGlobalSearch = new PlaceholderTextField("Search patients, appointments, doctors...", 26);
         txtGlobalSearch.addActionListener(e -> onGlobalSearch(txtGlobalSearch.getText().trim()));
         searchBox.add(searchIcon);
         searchBox.add(txtGlobalSearch);
@@ -322,7 +327,6 @@ public class MainFrame extends JFrame {
     public void showView(String viewName) {
         cardLayout.show(mainContentPanel, viewName);
 
-        // Reset all buttons
         for (ModernButton b : new ModernButton[]{btnNavDash, btnNavPatients, btnNavDoctors, btnNavAppts, btnNavTreatments, btnNavReports}) {
             b.setActive(false);
         }
@@ -363,9 +367,7 @@ public class MainFrame extends JFrame {
     }
 
     private void onGlobalSearch(String query) {
-        if (query.isEmpty() || query.startsWith("Search")) {
-            return;
-        }
+        if (query.isEmpty()) return;
         showView("PATIENTS");
     }
 
@@ -373,7 +375,7 @@ public class MainFrame extends JFrame {
         try {
             clinicController.saveAllData();
             JOptionPane.showMessageDialog(this,
-                    "All clinic records successfully saved to CSV files!",
+                    "All clinic records successfully saved to CSV files in the data/ directory!",
                     "Data Saved", JOptionPane.INFORMATION_MESSAGE);
             updateStatusBar("Data successfully persisted to CSV files.");
         } catch (DataPersistenceException e) {
@@ -394,6 +396,18 @@ public class MainFrame extends JFrame {
             JOptionPane.showMessageDialog(this,
                     "Failed to reload data: " + e.getMessage(),
                     "Persistence Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void confirmAndExit() {
+        int choice = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to exit the Health Clinic System?\nAny pending data has been auto-saved to files.",
+                "Confirm Exit", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (choice == JOptionPane.YES_OPTION) {
+            try {
+                clinicController.saveAllData();
+            } catch (Exception ignored) {}
+            System.exit(0);
         }
     }
 

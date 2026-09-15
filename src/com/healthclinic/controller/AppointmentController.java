@@ -81,6 +81,10 @@ public class AppointmentController {
         dataManager.saveAppointments(clinic.getAppointments());
     }
 
+    public String getNextAppointmentId() {
+        return clinic.generateNextAppointmentId();
+    }
+
     public ArrayList<Appointment> getAllAppointments() {
         return clinic.getAppointments();
     }

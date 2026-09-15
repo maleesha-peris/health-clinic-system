@@ -15,8 +15,9 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 
 /**
- * Task 5 - Reports Screen.
- * Generates Appointment Reports, Doctor Schedules, and clinic statistics.
+ * Task 5 - Reports & Doctor Rosters Screen.
+ * Redesigned with clean controls, non-clipping layout, and 
+ * a dedicated Download / Export report button.
  */
 public class ReportsPanel extends JPanel {
 
@@ -28,12 +29,13 @@ public class ReportsPanel extends JPanel {
     private JTextField txtFromDate;
     private JTextField txtToDate;
     private JTextArea txtReportOutput;
+    private JLabel lblStatusBanner;
 
     public ReportsPanel(ClinicController clinicController) {
         this.clinicController = clinicController;
         this.reportController = clinicController.getReportController();
 
-        setLayout(new BorderLayout(15, 15));
+        setLayout(new BorderLayout(14, 14));
         setBackground(UITheme.BG_MAIN);
         setBorder(new EmptyBorder(16, 18, 18, 18));
 
@@ -43,75 +45,97 @@ public class ReportsPanel extends JPanel {
     }
 
     private void initUI() {
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setOpaque(false);
+        // Top Title
+        JPanel titlePanel = new JPanel(new BorderLayout());
+        titlePanel.setOpaque(false);
         JLabel lblTitle = new JLabel("Clinic Reports & Doctor Schedules");
         lblTitle.setFont(UITheme.FONT_TITLE);
         lblTitle.setForeground(UITheme.TEXT_PRIMARY);
-        topPanel.add(lblTitle, BorderLayout.WEST);
-        add(topPanel, BorderLayout.NORTH);
+        titlePanel.add(lblTitle, BorderLayout.WEST);
+        add(titlePanel, BorderLayout.NORTH);
 
-        // Filter Card
+        // Center Wrapper
+        JPanel centerWrapper = new JPanel(new BorderLayout(12, 12));
+        centerWrapper.setOpaque(false);
+
+        // --- FILTER & ACTION CONTROLS CARD ---
         JPanel filterCard = UITheme.createCardPanel();
-        filterCard.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 4));
+        filterCard.setLayout(new BorderLayout(10, 10));
 
-        filterCard.add(createFieldLabel("Report Type:"));
+        JPanel controlRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 6));
+        controlRow.setOpaque(false);
+
+        controlRow.add(createLabel("Report Type:"));
         cmbReportType = new JComboBox<>(new String[]{
                 "Appointment Report",
                 "Doctor Schedules",
                 "Clinic Summary Statistics"
         });
-        filterCard.add(cmbReportType);
+        controlRow.add(cmbReportType);
 
-        filterCard.add(createFieldLabel("Doctor Filter:"));
+        controlRow.add(createLabel("Doctor Filter:"));
         cmbDoctorFilter = new JComboBox<>();
-        filterCard.add(cmbDoctorFilter);
+        controlRow.add(cmbDoctorFilter);
 
-        filterCard.add(createFieldLabel("From:"));
+        controlRow.add(createLabel("From:"));
         txtFromDate = createTextField();
         txtFromDate.setText(LocalDate.now().minusDays(30).toString());
         txtFromDate.setPreferredSize(new Dimension(95, 32));
-        filterCard.add(txtFromDate);
+        controlRow.add(txtFromDate);
 
-        filterCard.add(createFieldLabel("To:"));
+        controlRow.add(createLabel("To:"));
         txtToDate = createTextField();
         txtToDate.setText(LocalDate.now().plusDays(30).toString());
         txtToDate.setPreferredSize(new Dimension(95, 32));
-        filterCard.add(txtToDate);
+        controlRow.add(txtToDate);
 
         ModernButton btnGenerate = new ModernButton("Generate Report", IconFactory.createReportIcon(14, Color.WHITE), ModernButton.ButtonStyle.PRIMARY);
         btnGenerate.addActionListener(e -> generateReport());
-        filterCard.add(btnGenerate);
+        controlRow.add(btnGenerate);
 
-        ModernButton btnExport = new ModernButton("Export (.txt)", ModernButton.ButtonStyle.ACCENT);
-        btnExport.addActionListener(e -> exportReport());
-        filterCard.add(btnExport);
+        ModernButton btnDownload = new ModernButton("Download Report (TXT)", ModernButton.ButtonStyle.ACCENT);
+        btnDownload.setToolTipText("Save and download report to file");
+        btnDownload.addActionListener(e -> downloadReport());
+        controlRow.add(btnDownload);
 
-        add(filterCard, BorderLayout.NORTH);
+        filterCard.add(controlRow, BorderLayout.CENTER);
+        centerWrapper.add(filterCard, BorderLayout.NORTH);
 
-        // Output Area
-        JPanel reportCard = UITheme.createCardPanel();
-        reportCard.setLayout(new BorderLayout(10, 10));
+        // --- REPORT PREVIEW CARD ---
+        JPanel previewCard = UITheme.createCardPanel();
+        previewCard.setLayout(new BorderLayout(10, 10));
 
-        JLabel lblPreview = new JLabel("Report Preview", SwingConstants.LEFT);
-        lblPreview.setFont(UITheme.FONT_HEADER);
-        lblPreview.setForeground(UITheme.TEXT_PRIMARY);
-        reportCard.add(lblPreview, BorderLayout.NORTH);
+        JPanel previewHeader = new JPanel(new BorderLayout());
+        previewHeader.setOpaque(false);
+
+        JLabel lblPreviewTitle = new JLabel("Generated Clinical Report Document");
+        lblPreviewTitle.setFont(UITheme.FONT_HEADER);
+        lblPreviewTitle.setForeground(UITheme.TEXT_PRIMARY);
+
+        lblStatusBanner = new JLabel("● Report ready for download / export");
+        lblStatusBanner.setFont(UITheme.FONT_REGULAR);
+        lblStatusBanner.setForeground(UITheme.SUCCESS);
+
+        previewHeader.add(lblPreviewTitle, BorderLayout.WEST);
+        previewHeader.add(lblStatusBanner, BorderLayout.EAST);
+        previewCard.add(previewHeader, BorderLayout.NORTH);
 
         txtReportOutput = new JTextArea();
         txtReportOutput.setEditable(false);
-        txtReportOutput.setFont(UITheme.FONT_MONO);
-        txtReportOutput.setBackground(new Color(250, 250, 250));
-        txtReportOutput.setMargin(new Insets(14, 14, 14, 14));
+        txtReportOutput.setFont(new Font("Consolas", Font.PLAIN, 12));
+        txtReportOutput.setBackground(new Color(250, 252, 255));
+        txtReportOutput.setForeground(new Color(30, 41, 59));
+        txtReportOutput.setMargin(new Insets(16, 16, 16, 16));
 
         JScrollPane scrollPane = new JScrollPane(txtReportOutput);
         scrollPane.setBorder(BorderFactory.createLineBorder(UITheme.BORDER_COLOR));
-        reportCard.add(scrollPane, BorderLayout.CENTER);
+        previewCard.add(scrollPane, BorderLayout.CENTER);
 
-        add(reportCard, BorderLayout.CENTER);
+        centerWrapper.add(previewCard, BorderLayout.CENTER);
+        add(centerWrapper, BorderLayout.CENTER);
     }
 
-    private JLabel createFieldLabel(String text) {
+    private JLabel createLabel(String text) {
         JLabel l = new JLabel(text);
         l.setFont(UITheme.FONT_BOLD);
         l.setForeground(UITheme.TEXT_PRIMARY);
@@ -152,16 +176,18 @@ public class ReportsPanel extends JPanel {
                 to = ValidationUtil.parseAndValidateDate(txtToDate.getText().trim(), "To Date");
             }
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Date format error: " + ex.getMessage(), "Input Error", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Date error: " + ex.getMessage(), "Input Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         if ("Appointment Report".equals(reportType)) {
             String report = reportController.generateAppointmentReport(from, to, doctorId);
             txtReportOutput.setText(report);
+            lblStatusBanner.setText("● Appointment report generated successfully");
         } else if ("Doctor Schedules".equals(reportType)) {
             String report = reportController.generateDoctorScheduleReport(doctorId);
             txtReportOutput.setText(report);
+            lblStatusBanner.setText("● Doctor schedule roster generated successfully");
         } else {
             StringBuilder sb = new StringBuilder();
             sb.append("========================================================================================\n");
@@ -171,27 +197,33 @@ public class ReportsPanel extends JPanel {
             sb.append(reportController.getClinicStatistics()).append("\n\n");
             sb.append("========================================================================================\n");
             txtReportOutput.setText(sb.toString());
+            lblStatusBanner.setText("● Executive summary statistics ready");
         }
         txtReportOutput.setCaretPosition(0);
     }
 
-    private void exportReport() {
+    private void downloadReport() {
         String content = txtReportOutput.getText();
         if (content.trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No report content to export.", "Empty Report", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please generate a report first before downloading.", "Empty Report", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setSelectedFile(new File("clinic_report_" + System.currentTimeMillis() + ".txt"));
+        String fileName = "Clinic_Report_" + System.currentTimeMillis() + ".txt";
+        fileChooser.setSelectedFile(new File(fileName));
+
         int choice = fileChooser.showSaveDialog(this);
         if (choice == JFileChooser.APPROVE_OPTION) {
             File target = fileChooser.getSelectedFile();
             try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(target), StandardCharsets.UTF_8)) {
                 writer.write(content);
-                JOptionPane.showMessageDialog(this, "Report exported successfully to: " + target.getAbsolutePath(), "Export Success", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        "Report successfully downloaded and saved!\nLocation: " + target.getAbsolutePath(),
+                        "Download Complete", JOptionPane.INFORMATION_MESSAGE);
+                lblStatusBanner.setText("✓ Report downloaded to: " + target.getName());
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Failed to export report: " + ex.getMessage(), "Export Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Download failed: " + ex.getMessage(), "Download Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }

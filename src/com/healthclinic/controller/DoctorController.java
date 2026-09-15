@@ -98,6 +98,10 @@ public class DoctorController {
         return clinic.findDoctorById(id);
     }
 
+    public String getNextDoctorId() {
+        return clinic.generateNextDoctorId();
+    }
+
     public ArrayList<Doctor> getAllDoctors() {
         return clinic.getDoctors();
     }

@@ -17,8 +17,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Task 5 - Treatment Entry Screen.
- * Modern UI for logging clinical diagnoses, prescriptions, costs, and notes.
+ * Task 5 - Treatment Records Entry & Management.
+ * Redesigned with clean Top-Table & Bottom-Form layout for spacious, sweet UI.
+ * Features auto-generated sequential Treatment IDs.
  */
 public class TreatmentEntryPanel extends JPanel {
 
@@ -35,6 +36,7 @@ public class TreatmentEntryPanel extends JPanel {
     private JTextField txtCost;
     private JTextField txtNotes;
 
+    private PlaceholderTextField txtSearch;
     private JTable treatTable;
     private DefaultTableModel tableModel;
 
@@ -44,58 +46,120 @@ public class TreatmentEntryPanel extends JPanel {
         this.clinicController = clinicController;
         this.treatmentController = clinicController.getTreatmentController();
 
-        setLayout(new BorderLayout(15, 15));
+        setLayout(new BorderLayout(12, 12));
         setBackground(UITheme.BG_MAIN);
-        setBorder(new EmptyBorder(16, 18, 18, 18));
+        setBorder(new EmptyBorder(14, 16, 14, 16));
 
         initUI();
         refreshDropdowns();
         refreshTable();
+        loadNextAutoId();
     }
 
     private void initUI() {
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setOpaque(false);
-        JLabel lblTitle = new JLabel("Treatment Records & Prescription Entry");
-        lblTitle.setFont(UITheme.FONT_TITLE);
-        lblTitle.setForeground(UITheme.TEXT_PRIMARY);
-        topPanel.add(lblTitle, BorderLayout.WEST);
-        add(topPanel, BorderLayout.NORTH);
+        // --- TOP SECTION: DIRECTORY TABLE ---
+        JPanel topCard = UITheme.createCardPanel();
+        topCard.setLayout(new BorderLayout(10, 10));
 
-        JPanel splitPanel = new JPanel(new BorderLayout(15, 15));
-        splitPanel.setOpaque(false);
+        JPanel toolbar = new JPanel(new BorderLayout(10, 0));
+        toolbar.setOpaque(false);
 
-        // --- LEFT: ENTRY FORM ---
-        JPanel formCard = UITheme.createCardPanel();
-        formCard.setLayout(new BorderLayout(12, 12));
-        formCard.setPreferredSize(new Dimension(380, 520));
+        JLabel lblTableTitle = new JLabel("Recorded Clinical Treatments & Prescriptions");
+        lblTableTitle.setFont(UITheme.FONT_HEADER);
+        lblTableTitle.setForeground(UITheme.TEXT_PRIMARY);
 
-        JLabel lblFormTitle = new JLabel("Clinical Record Details");
+        JPanel controls = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        controls.setOpaque(false);
+
+        txtSearch = new PlaceholderTextField("Filter by diagnosis or patient...", 18);
+        txtSearch.addActionListener(e -> onSearch());
+
+        ModernButton btnSearch = new ModernButton("Filter", ModernButton.ButtonStyle.SECONDARY);
+        btnSearch.addActionListener(e -> onSearch());
+
+        ModernButton btnRefresh = new ModernButton("Show All", ModernButton.ButtonStyle.SECONDARY);
+        btnRefresh.addActionListener(e -> {
+            txtSearch.setText("");
+            refreshDropdowns();
+            refreshTable();
+        });
+
+        ModernButton btnDelete = new ModernButton("Delete Record", ModernButton.ButtonStyle.DANGER);
+        btnDelete.addActionListener(e -> onDelete());
+
+        controls.add(txtSearch);
+        controls.add(btnSearch);
+        controls.add(btnRefresh);
+        controls.add(btnDelete);
+
+        toolbar.add(lblTableTitle, BorderLayout.WEST);
+        toolbar.add(controls, BorderLayout.EAST);
+        topCard.add(toolbar, BorderLayout.NORTH);
+
+        // Table
+        String[] cols = {"Treatment ID", "Linked Appt", "Patient Name", "Attending Doctor", "Treatment Date", "Clinical Diagnosis", "Prescription", "Cost ($)", "Notes"};
+        tableModel = new DefaultTableModel(cols, 0) {
+            @Override
+            public boolean isCellEditable(int row, int col) {
+                return false;
+            }
+        };
+
+        treatTable = new JTable(tableModel);
+        UITheme.styleTable(treatTable);
+
+        treatTable.getSelectionModel().addListSelectionListener(e -> {
+            int selectedRow = treatTable.getSelectedRow();
+            if (selectedRow >= 0) {
+                txtTreatId.setText(tableModel.getValueAt(selectedRow, 0).toString());
+                txtDate.setText(tableModel.getValueAt(selectedRow, 4).toString());
+                txtDiagnosis.setText(tableModel.getValueAt(selectedRow, 5).toString());
+                txtPrescription.setText(tableModel.getValueAt(selectedRow, 6).toString());
+                txtCost.setText(tableModel.getValueAt(selectedRow, 7).toString());
+                txtNotes.setText(tableModel.getValueAt(selectedRow, 8) != null ? tableModel.getValueAt(selectedRow, 8).toString() : "");
+            }
+        });
+
+        JScrollPane scrollPane = new JScrollPane(treatTable);
+        scrollPane.setBorder(BorderFactory.createLineBorder(UITheme.BORDER_COLOR));
+        scrollPane.getViewport().setBackground(Color.WHITE);
+        scrollPane.setPreferredSize(new Dimension(800, 240));
+
+        topCard.add(scrollPane, BorderLayout.CENTER);
+        add(topCard, BorderLayout.CENTER);
+
+        // --- BOTTOM SECTION: ENTRY FORM ---
+        JPanel bottomCard = UITheme.createCardPanel();
+        bottomCard.setLayout(new BorderLayout(10, 10));
+
+        JLabel lblFormTitle = new JLabel("Treatment Details Form (Record / Update)");
         lblFormTitle.setFont(UITheme.FONT_HEADER);
         lblFormTitle.setForeground(UITheme.TEXT_PRIMARY);
-        formCard.add(lblFormTitle, BorderLayout.NORTH);
+        bottomCard.add(lblFormTitle, BorderLayout.NORTH);
 
-        JPanel fieldsPanel = new JPanel(new GridBagLayout());
-        fieldsPanel.setOpaque(false);
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(4, 4, 4, 4);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        JPanel gridForm = new JPanel(new GridLayout(3, 6, 12, 10));
+        gridForm.setOpaque(false);
 
         txtTreatId = createTextField();
+        txtTreatId.setEditable(false);
+        txtTreatId.setBackground(new Color(241, 245, 249));
+        txtTreatId.setToolTipText("Auto-generated unique Treatment ID");
+
         cmbAppointments = new JComboBox<>();
         cmbPatients = new JComboBox<>();
         cmbDoctors = new JComboBox<>();
         txtDate = createTextField();
         txtDate.setText(LocalDate.now().format(DF));
         txtDiagnosis = createTextField();
-        txtPrescription = new JTextArea(3, 20);
-        txtPrescription.setLineWrap(true);
-        txtPrescription.setWrapStyleWord(true);
-        txtPrescription.setFont(UITheme.FONT_REGULAR);
-        JScrollPane scrollPresc = new JScrollPane(txtPrescription);
-        scrollPresc.setBorder(BorderFactory.createLineBorder(new Color(203, 213, 225), 1));
         txtCost = createTextField();
         txtNotes = createTextField();
+
+        txtPrescription = new JTextArea(2, 15);
+        txtPrescription.setFont(UITheme.FONT_REGULAR);
+        txtPrescription.setLineWrap(true);
+        txtPrescription.setWrapStyleWord(true);
+        JScrollPane scrollPresc = new JScrollPane(txtPrescription);
+        scrollPresc.setBorder(BorderFactory.createLineBorder(new Color(203, 213, 225), 1));
 
         cmbAppointments.addActionListener(e -> {
             String selected = (String) cmbAppointments.getSelectedItem();
@@ -109,86 +173,54 @@ public class TreatmentEntryPanel extends JPanel {
             }
         });
 
-        int row = 0;
-        addRow(fieldsPanel, gbc, row++, "Treatment ID: *", txtTreatId);
-        addRow(fieldsPanel, gbc, row++, "Linked Appointment:", cmbAppointments);
-        addRow(fieldsPanel, gbc, row++, "Patient: *", cmbPatients);
-        addRow(fieldsPanel, gbc, row++, "Attending Doctor: *", cmbDoctors);
-        addRow(fieldsPanel, gbc, row++, "Date (YYYY-MM-DD): *", txtDate);
-        addRow(fieldsPanel, gbc, row++, "Diagnosis: *", txtDiagnosis);
-        addRow(fieldsPanel, gbc, row++, "Prescription: *", scrollPresc);
-        addRow(fieldsPanel, gbc, row++, "Cost ($): *", txtCost);
-        addRow(fieldsPanel, gbc, row++, "Clinical Notes:", txtNotes);
+        // Row 1
+        gridForm.add(createFieldLabel("Treatment ID (Auto):"));
+        gridForm.add(txtTreatId);
+        gridForm.add(createFieldLabel("Linked Appointment:"));
+        gridForm.add(cmbAppointments);
+        gridForm.add(createFieldLabel("Select Patient: *"));
+        gridForm.add(cmbPatients);
 
-        formCard.add(fieldsPanel, BorderLayout.CENTER);
+        // Row 2
+        gridForm.add(createFieldLabel("Attending Doctor: *"));
+        gridForm.add(cmbDoctors);
+        gridForm.add(createFieldLabel("Date (YYYY-MM-DD): *"));
+        gridForm.add(txtDate);
+        gridForm.add(createFieldLabel("Diagnosis: *"));
+        gridForm.add(txtDiagnosis);
 
-        // Buttons
-        JPanel btnRow = new JPanel(new GridLayout(1, 2, 8, 0));
+        // Row 3
+        gridForm.add(createFieldLabel("Prescription: *"));
+        gridForm.add(scrollPresc);
+        gridForm.add(createFieldLabel("Treatment Cost ($): *"));
+        gridForm.add(txtCost);
+        gridForm.add(createFieldLabel("Clinical Notes:"));
+        gridForm.add(txtNotes);
+
+        bottomCard.add(gridForm, BorderLayout.CENTER);
+
+        // Action Buttons Row
+        JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 4));
         btnRow.setOpaque(false);
 
-        ModernButton btnSave = new ModernButton("Save Treatment", IconFactory.createPillIcon(14, Color.WHITE), ModernButton.ButtonStyle.PRIMARY);
+        ModernButton btnSave = new ModernButton("Save Treatment Record", IconFactory.createPillIcon(14, Color.WHITE), ModernButton.ButtonStyle.PRIMARY);
         btnSave.addActionListener(e -> onSave());
 
-        ModernButton btnClear = new ModernButton("Clear Form", ModernButton.ButtonStyle.SECONDARY);
+        ModernButton btnClear = new ModernButton("Clear / New Record", ModernButton.ButtonStyle.SECONDARY);
         btnClear.addActionListener(e -> clearForm());
 
         btnRow.add(btnSave);
         btnRow.add(btnClear);
 
-        formCard.add(btnRow, BorderLayout.SOUTH);
-        splitPanel.add(formCard, BorderLayout.WEST);
-
-        // --- RIGHT: TABLE ---
-        JPanel rightCard = UITheme.createCardPanel();
-        rightCard.setLayout(new BorderLayout(12, 12));
-
-        JLabel lblTableTitle = new JLabel("Treatment History Log", SwingConstants.LEFT);
-        lblTableTitle.setFont(UITheme.FONT_HEADER);
-        lblTableTitle.setForeground(UITheme.TEXT_PRIMARY);
-        rightCard.add(lblTableTitle, BorderLayout.NORTH);
-
-        String[] cols = {"ID", "Appt", "Patient", "Doctor", "Date", "Diagnosis", "Prescription", "Cost ($)", "Notes"};
-        tableModel = new DefaultTableModel(cols, 0) {
-            @Override
-            public boolean isCellEditable(int row, int col) {
-                return false;
-            }
-        };
-
-        treatTable = new JTable(tableModel);
-        UITheme.styleTable(treatTable);
-
-        JScrollPane scrollPane = new JScrollPane(treatTable);
-        scrollPane.setBorder(BorderFactory.createLineBorder(UITheme.BORDER_COLOR));
-        scrollPane.getViewport().setBackground(Color.WHITE);
-        rightCard.add(scrollPane, BorderLayout.CENTER);
-
-        // Bottom delete
-        JPanel bottomRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        bottomRow.setOpaque(false);
-
-        ModernButton btnDelete = new ModernButton("Delete Selected Treatment", ModernButton.ButtonStyle.DANGER);
-        btnDelete.addActionListener(e -> onDelete());
-        bottomRow.add(btnDelete);
-
-        rightCard.add(bottomRow, BorderLayout.SOUTH);
-        splitPanel.add(rightCard, BorderLayout.CENTER);
-
-        add(splitPanel, BorderLayout.CENTER);
+        bottomCard.add(btnRow, BorderLayout.SOUTH);
+        add(bottomCard, BorderLayout.SOUTH);
     }
 
-    private void addRow(JPanel panel, GridBagConstraints gbc, int row, String label, Component comp) {
-        gbc.gridx = 0;
-        gbc.gridy = row;
-        gbc.weightx = 0.3;
-        JLabel l = new JLabel(label);
+    private JLabel createFieldLabel(String text) {
+        JLabel l = new JLabel(text);
         l.setFont(UITheme.FONT_BOLD);
         l.setForeground(UITheme.TEXT_PRIMARY);
-        panel.add(l, gbc);
-
-        gbc.gridx = 1;
-        gbc.weightx = 0.7;
-        panel.add(comp, gbc);
+        return l;
     }
 
     private JTextField createTextField() {
@@ -199,6 +231,10 @@ public class TreatmentEntryPanel extends JPanel {
                 new EmptyBorder(5, 8, 5, 8)
         ));
         return tf;
+    }
+
+    private void loadNextAutoId() {
+        txtTreatId.setText(treatmentController.getNextTreatmentId());
     }
 
     public void refreshDropdowns() {
@@ -265,7 +301,7 @@ public class TreatmentEntryPanel extends JPanel {
                     txtNotes.getText()
             );
 
-            JOptionPane.showMessageDialog(this, "Treatment record saved successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Treatment record " + txtTreatId.getText() + " saved successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             clearForm();
             refreshTable();
             refreshDropdowns();
@@ -279,7 +315,7 @@ public class TreatmentEntryPanel extends JPanel {
     private void onDelete() {
         int selectedRow = treatTable.getSelectedRow();
         if (selectedRow < 0) {
-            JOptionPane.showMessageDialog(this, "Please select a treatment record to delete.", "Notice", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please select a treatment record to delete.", "Select Record", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -288,11 +324,43 @@ public class TreatmentEntryPanel extends JPanel {
         if (confirm == JOptionPane.YES_OPTION) {
             try {
                 treatmentController.deleteTreatment(id);
-                JOptionPane.showMessageDialog(this, "Treatment deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Treatment deleted successfully.", "Deleted", JOptionPane.INFORMATION_MESSAGE);
                 clearForm();
                 refreshTable();
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Error deleting treatment: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void onSearch() {
+        String q = txtSearch.getText().trim().toLowerCase();
+        if (q.isEmpty()) {
+            refreshTable();
+            return;
+        }
+        tableModel.setRowCount(0);
+        Clinic clinic = clinicController.getClinic();
+        for (Treatment t : treatmentController.getAllTreatments()) {
+            if (t.getDiagnosis().toLowerCase().contains(q) || t.getPatientId().toLowerCase().contains(q) || t.getTreatmentId().toLowerCase().contains(q)) {
+                Patient p = clinic.findPatientById(t.getPatientId());
+                Doctor d = clinic.findDoctorById(t.getDoctorId());
+
+                String pName = p != null ? p.getName() + " (" + t.getPatientId() + ")" : t.getPatientId();
+                String dName = d != null ? "Dr. " + d.getName() : t.getDoctorId();
+                String dateStr = t.getTreatmentDate() != null ? t.getTreatmentDate().format(DF) : "N/A";
+
+                tableModel.addRow(new Object[]{
+                        t.getTreatmentId(),
+                        t.getAppointmentId(),
+                        pName,
+                        dName,
+                        dateStr,
+                        t.getDiagnosis(),
+                        t.getPrescription(),
+                        String.format("%.2f", t.getCost()),
+                        t.getNotes()
+                });
             }
         }
     }
@@ -323,7 +391,7 @@ public class TreatmentEntryPanel extends JPanel {
     }
 
     private void clearForm() {
-        txtTreatId.setText("");
+        loadNextAutoId();
         cmbAppointments.setSelectedIndex(0);
         txtDate.setText(LocalDate.now().format(DF));
         txtDiagnosis.setText("");

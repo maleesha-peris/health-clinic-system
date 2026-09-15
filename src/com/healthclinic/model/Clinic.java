@@ -2,13 +2,10 @@ package com.healthclinic.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Aggregate Root model representing the Clinic.
- * Encapsulates ArrayList collections for Patients, Doctors, Appointments,
- * Treatments, and Administrators. Demonstrates High Cohesion and Encapsulation.
+ * Encapsulates collections and provides auto-ID generation.
  */
 public class Clinic implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -17,7 +14,6 @@ public class Clinic implements Serializable {
     private String address;
     private String contactNumber;
 
-    // ArrayList collections as specified in Task 7
     private ArrayList<Patient> patients;
     private ArrayList<Doctor> doctors;
     private ArrayList<Appointment> appointments;
@@ -63,7 +59,62 @@ public class Clinic implements Serializable {
         this.contactNumber = contactNumber;
     }
 
-    // Defensive copy getters & direct mutators ensuring encapsulation
+    // Auto-ID Generators (Sequential Order)
+    public synchronized String generateNextPatientId() {
+        int max = 100;
+        for (Patient p : patients) {
+            try {
+                String numStr = p.getId().replaceAll("[^0-9]", "");
+                if (!numStr.isEmpty()) {
+                    int val = Integer.parseInt(numStr);
+                    if (val > max) max = val;
+                }
+            } catch (Exception ignored) {}
+        }
+        return "P" + (max + 1);
+    }
+
+    public synchronized String generateNextDoctorId() {
+        int max = 200;
+        for (Doctor d : doctors) {
+            try {
+                String numStr = d.getId().replaceAll("[^0-9]", "");
+                if (!numStr.isEmpty()) {
+                    int val = Integer.parseInt(numStr);
+                    if (val > max) max = val;
+                }
+            } catch (Exception ignored) {}
+        }
+        return "D" + (max + 1);
+    }
+
+    public synchronized String generateNextAppointmentId() {
+        int max = 300;
+        for (Appointment a : appointments) {
+            try {
+                String numStr = a.getAppointmentId().replaceAll("[^0-9]", "");
+                if (!numStr.isEmpty()) {
+                    int val = Integer.parseInt(numStr);
+                    if (val > max) max = val;
+                }
+            } catch (Exception ignored) {}
+        }
+        return "A" + (max + 1);
+    }
+
+    public synchronized String generateNextTreatmentId() {
+        int max = 400;
+        for (Treatment t : treatments) {
+            try {
+                String numStr = t.getTreatmentId().replaceAll("[^0-9]", "");
+                if (!numStr.isEmpty()) {
+                    int val = Integer.parseInt(numStr);
+                    if (val > max) max = val;
+                }
+            } catch (Exception ignored) {}
+        }
+        return "T" + (max + 1);
+    }
 
     public ArrayList<Patient> getPatients() {
         return new ArrayList<>(patients);

@@ -17,8 +17,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 /**
- * Task 5 - Appointment Booking Screen.
- * Features appointment scheduling, Quick Sort by date, and status pill badges.
+ * Task 5 - Appointment Booking & Management.
+ * Redesigned with clean Top-Table & Bottom-Form layout for spacious, sweet UI.
+ * Features auto-generated sequential Appointment IDs and Quick Sort by date.
  */
 public class AppointmentBookingPanel extends JPanel {
 
@@ -32,7 +33,7 @@ public class AppointmentBookingPanel extends JPanel {
     private JTextField txtNotes;
     private JComboBox<String> cmbStatus;
 
-    private JTextField txtSearch;
+    private PlaceholderTextField txtSearch;
     private JTable apptTable;
     private DefaultTableModel tableModel;
 
@@ -42,122 +43,63 @@ public class AppointmentBookingPanel extends JPanel {
         this.clinicController = clinicController;
         this.appointmentController = clinicController.getAppointmentController();
 
-        setLayout(new BorderLayout(15, 15));
+        setLayout(new BorderLayout(12, 12));
         setBackground(UITheme.BG_MAIN);
-        setBorder(new EmptyBorder(16, 18, 18, 18));
+        setBorder(new EmptyBorder(14, 16, 14, 16));
 
         initUI();
         refreshDropdowns();
         refreshTable();
+        loadNextAutoId();
     }
 
     private void initUI() {
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setOpaque(false);
-        JLabel lblTitle = new JLabel("Appointment Booking & Scheduling");
-        lblTitle.setFont(UITheme.FONT_TITLE);
-        lblTitle.setForeground(UITheme.TEXT_PRIMARY);
-        topPanel.add(lblTitle, BorderLayout.WEST);
-        add(topPanel, BorderLayout.NORTH);
+        // --- TOP SECTION: DIRECTORY TABLE ---
+        JPanel topCard = UITheme.createCardPanel();
+        topCard.setLayout(new BorderLayout(10, 10));
 
-        JPanel splitPanel = new JPanel(new BorderLayout(15, 15));
-        splitPanel.setOpaque(false);
-
-        // --- LEFT: BOOKING FORM ---
-        JPanel formCard = UITheme.createCardPanel();
-        formCard.setLayout(new BorderLayout(12, 12));
-        formCard.setPreferredSize(new Dimension(370, 490));
-
-        JLabel lblFormTitle = new JLabel("Schedule Appointment");
-        lblFormTitle.setFont(UITheme.FONT_HEADER);
-        lblFormTitle.setForeground(UITheme.TEXT_PRIMARY);
-        formCard.add(lblFormTitle, BorderLayout.NORTH);
-
-        JPanel fieldsPanel = new JPanel(new GridLayout(6, 2, 8, 12));
-        fieldsPanel.setOpaque(false);
-
-        txtApptId = createTextField();
-        cmbPatients = new JComboBox<>();
-        cmbDoctors = new JComboBox<>();
-        txtDateTime = createTextField();
-        txtDateTime.setText(LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).format(DTF));
-        cmbStatus = new JComboBox<>(new String[]{"SCHEDULED", "COMPLETED", "CANCELLED"});
-        txtNotes = createTextField();
-
-        fieldsPanel.add(createFieldLabel("Appointment ID: *"));
-        fieldsPanel.add(txtApptId);
-        fieldsPanel.add(createFieldLabel("Select Patient: *"));
-        fieldsPanel.add(cmbPatients);
-        fieldsPanel.add(createFieldLabel("Select Doctor: *"));
-        fieldsPanel.add(cmbDoctors);
-        fieldsPanel.add(createFieldLabel("Date & Time: *"));
-        fieldsPanel.add(txtDateTime);
-        fieldsPanel.add(createFieldLabel("Status:"));
-        fieldsPanel.add(cmbStatus);
-        fieldsPanel.add(createFieldLabel("Reason / Notes:"));
-        fieldsPanel.add(txtNotes);
-
-        formCard.add(fieldsPanel, BorderLayout.CENTER);
-
-        // Buttons
-        JPanel btnCol = new JPanel(new GridLayout(3, 1, 6, 8));
-        btnCol.setOpaque(false);
-
-        ModernButton btnBook = new ModernButton("Book Appointment", IconFactory.createCalendarIcon(14, Color.WHITE), ModernButton.ButtonStyle.PRIMARY);
-        btnBook.addActionListener(e -> onBook());
-
-        JPanel statusBtnRow = new JPanel(new GridLayout(1, 2, 6, 0));
-        statusBtnRow.setOpaque(false);
-        ModernButton btnComplete = new ModernButton("Mark Completed", ModernButton.ButtonStyle.SUCCESS);
-        btnComplete.addActionListener(e -> onUpdateStatus("COMPLETED"));
-        ModernButton btnCancelAppt = new ModernButton("Mark Cancelled", ModernButton.ButtonStyle.SECONDARY);
-        btnCancelAppt.addActionListener(e -> onUpdateStatus("CANCELLED"));
-        statusBtnRow.add(btnComplete);
-        statusBtnRow.add(btnCancelAppt);
-
-        ModernButton btnClear = new ModernButton("Clear Form", ModernButton.ButtonStyle.SECONDARY);
-        btnClear.addActionListener(e -> clearForm());
-
-        btnCol.add(btnBook);
-        btnCol.add(statusBtnRow);
-        btnCol.add(btnClear);
-
-        formCard.add(btnCol, BorderLayout.SOUTH);
-        splitPanel.add(formCard, BorderLayout.WEST);
-
-        // --- RIGHT: APPOINTMENTS TABLE ---
-        JPanel rightCard = UITheme.createCardPanel();
-        rightCard.setLayout(new BorderLayout(12, 12));
-
-        // Toolbar
-        JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        JPanel toolbar = new JPanel(new BorderLayout(10, 0));
         toolbar.setOpaque(false);
+
+        JLabel lblTableTitle = new JLabel("Scheduled Appointments Roster");
+        lblTableTitle.setFont(UITheme.FONT_HEADER);
+        lblTableTitle.setForeground(UITheme.TEXT_PRIMARY);
+
+        JPanel controls = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        controls.setOpaque(false);
 
         ModernButton btnSortQuick = new ModernButton("Sort by Date (Quick Sort)", IconFactory.createSortIcon(14, Color.WHITE), ModernButton.ButtonStyle.ACCENT);
         btnSortQuick.setToolTipText("Sorts appointments chronologically using O(n log n) Quick Sort");
         btnSortQuick.addActionListener(e -> onQuickSort());
-        toolbar.add(btnSortQuick);
 
-        toolbar.add(new JLabel("  Filter:"));
-        txtSearch = createTextField();
-        txtSearch.setPreferredSize(new Dimension(110, 32));
-        toolbar.add(txtSearch);
+        txtSearch = new PlaceholderTextField("Filter by patient, doctor, or status...", 18);
+        txtSearch.addActionListener(e -> onSearch());
 
         ModernButton btnSearch = new ModernButton("Search", ModernButton.ButtonStyle.SECONDARY);
         btnSearch.addActionListener(e -> onSearch());
-        toolbar.add(btnSearch);
 
-        ModernButton btnRefresh = new ModernButton("Refresh", ModernButton.ButtonStyle.SECONDARY);
+        ModernButton btnRefresh = new ModernButton("Show All", ModernButton.ButtonStyle.SECONDARY);
         btnRefresh.addActionListener(e -> {
+            txtSearch.setText("");
             refreshDropdowns();
             refreshTable();
         });
-        toolbar.add(btnRefresh);
 
-        rightCard.add(toolbar, BorderLayout.NORTH);
+        ModernButton btnDelete = new ModernButton("Delete Appt", ModernButton.ButtonStyle.DANGER);
+        btnDelete.addActionListener(e -> onDelete());
+
+        controls.add(btnSortQuick);
+        controls.add(txtSearch);
+        controls.add(btnSearch);
+        controls.add(btnRefresh);
+        controls.add(btnDelete);
+
+        toolbar.add(lblTableTitle, BorderLayout.WEST);
+        toolbar.add(controls, BorderLayout.EAST);
+        topCard.add(toolbar, BorderLayout.NORTH);
 
         // Table
-        String[] cols = {"Appt ID", "Patient", "Doctor", "Date & Time", "Status", "Notes"};
+        String[] cols = {"Appt ID", "Patient Name & ID", "Doctor Assigned", "Scheduled Date & Time", "Status", "Clinical Purpose / Notes"};
         tableModel = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
@@ -167,8 +109,6 @@ public class AppointmentBookingPanel extends JPanel {
 
         apptTable = new JTable(tableModel);
         UITheme.styleTable(apptTable);
-
-        // Render Status with colored pill badges
         apptTable.getColumnModel().getColumn(4).setCellRenderer(new StatusBadgeRenderer());
 
         apptTable.getSelectionModel().addListSelectionListener(e -> {
@@ -184,20 +124,76 @@ public class AppointmentBookingPanel extends JPanel {
         JScrollPane scrollPane = new JScrollPane(apptTable);
         scrollPane.setBorder(BorderFactory.createLineBorder(UITheme.BORDER_COLOR));
         scrollPane.getViewport().setBackground(Color.WHITE);
-        rightCard.add(scrollPane, BorderLayout.CENTER);
+        scrollPane.setPreferredSize(new Dimension(800, 240));
 
-        // Bottom Actions
-        JPanel bottomRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        bottomRow.setOpaque(false);
+        topCard.add(scrollPane, BorderLayout.CENTER);
+        add(topCard, BorderLayout.CENTER);
 
-        ModernButton btnDelete = new ModernButton("Delete Selected Appointment", ModernButton.ButtonStyle.DANGER);
-        btnDelete.addActionListener(e -> onDelete());
-        bottomRow.add(btnDelete);
+        // --- BOTTOM SECTION: BOOKING & EDIT FORM ---
+        JPanel bottomCard = UITheme.createCardPanel();
+        bottomCard.setLayout(new BorderLayout(10, 10));
 
-        rightCard.add(bottomRow, BorderLayout.SOUTH);
-        splitPanel.add(rightCard, BorderLayout.CENTER);
+        JLabel lblFormTitle = new JLabel("Appointment Details Form (Book / Update)");
+        lblFormTitle.setFont(UITheme.FONT_HEADER);
+        lblFormTitle.setForeground(UITheme.TEXT_PRIMARY);
+        bottomCard.add(lblFormTitle, BorderLayout.NORTH);
 
-        add(splitPanel, BorderLayout.CENTER);
+        JPanel gridForm = new JPanel(new GridLayout(2, 6, 12, 10));
+        gridForm.setOpaque(false);
+
+        txtApptId = createTextField();
+        txtApptId.setEditable(false);
+        txtApptId.setBackground(new Color(241, 245, 249));
+        txtApptId.setToolTipText("Auto-generated unique Appointment ID");
+
+        cmbPatients = new JComboBox<>();
+        cmbDoctors = new JComboBox<>();
+        txtDateTime = createTextField();
+        txtDateTime.setText(LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).format(DTF));
+        cmbStatus = new JComboBox<>(new String[]{"SCHEDULED", "COMPLETED", "CANCELLED"});
+        txtNotes = createTextField();
+
+        // Row 1
+        gridForm.add(createFieldLabel("Appt ID (Auto):"));
+        gridForm.add(txtApptId);
+        gridForm.add(createFieldLabel("Select Patient: *"));
+        gridForm.add(cmbPatients);
+        gridForm.add(createFieldLabel("Select Doctor: *"));
+        gridForm.add(cmbDoctors);
+
+        // Row 2
+        gridForm.add(createFieldLabel("Date & Time: *"));
+        gridForm.add(txtDateTime);
+        gridForm.add(createFieldLabel("Status:"));
+        gridForm.add(cmbStatus);
+        gridForm.add(createFieldLabel("Purpose / Notes:"));
+        gridForm.add(txtNotes);
+
+        bottomCard.add(gridForm, BorderLayout.CENTER);
+
+        // Action Buttons Row
+        JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 4));
+        btnRow.setOpaque(false);
+
+        ModernButton btnBook = new ModernButton("Book Appointment", IconFactory.createCalendarIcon(14, Color.WHITE), ModernButton.ButtonStyle.PRIMARY);
+        btnBook.addActionListener(e -> onBook());
+
+        ModernButton btnComplete = new ModernButton("Mark Completed", ModernButton.ButtonStyle.SUCCESS);
+        btnComplete.addActionListener(e -> onUpdateStatus("COMPLETED"));
+
+        ModernButton btnCancelAppt = new ModernButton("Mark Cancelled", ModernButton.ButtonStyle.SECONDARY);
+        btnCancelAppt.addActionListener(e -> onUpdateStatus("CANCELLED"));
+
+        ModernButton btnClear = new ModernButton("Clear / New Appt", ModernButton.ButtonStyle.SECONDARY);
+        btnClear.addActionListener(e -> clearForm());
+
+        btnRow.add(btnBook);
+        btnRow.add(btnComplete);
+        btnRow.add(btnCancelAppt);
+        btnRow.add(btnClear);
+
+        bottomCard.add(btnRow, BorderLayout.SOUTH);
+        add(bottomCard, BorderLayout.SOUTH);
     }
 
     private JLabel createFieldLabel(String text) {
@@ -215,6 +211,10 @@ public class AppointmentBookingPanel extends JPanel {
                 new EmptyBorder(5, 8, 5, 8)
         ));
         return tf;
+    }
+
+    private void loadNextAutoId() {
+        txtApptId.setText(appointmentController.getNextAppointmentId());
     }
 
     public void refreshDropdowns() {
@@ -250,7 +250,7 @@ public class AppointmentBookingPanel extends JPanel {
                     txtNotes.getText()
             );
 
-            JOptionPane.showMessageDialog(this, "Appointment booked successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Appointment " + txtApptId.getText() + " booked successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             clearForm();
             refreshTable();
         } catch (ValidationException ve) {
@@ -263,7 +263,7 @@ public class AppointmentBookingPanel extends JPanel {
     private void onUpdateStatus(String newStatus) {
         int selectedRow = apptTable.getSelectedRow();
         if (selectedRow < 0) {
-            JOptionPane.showMessageDialog(this, "Please select an appointment first.", "Notice", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please select an appointment from the table first.", "Select Record", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -280,7 +280,7 @@ public class AppointmentBookingPanel extends JPanel {
     private void onDelete() {
         int selectedRow = apptTable.getSelectedRow();
         if (selectedRow < 0) {
-            JOptionPane.showMessageDialog(this, "Please select an appointment to delete.", "Notice", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please select an appointment to delete.", "Select Record", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -289,7 +289,7 @@ public class AppointmentBookingPanel extends JPanel {
         if (confirm == JOptionPane.YES_OPTION) {
             try {
                 appointmentController.deleteAppointment(id);
-                JOptionPane.showMessageDialog(this, "Appointment deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Appointment deleted successfully.", "Deleted", JOptionPane.INFORMATION_MESSAGE);
                 clearForm();
                 refreshTable();
             } catch (Exception ex) {
@@ -357,7 +357,7 @@ public class AppointmentBookingPanel extends JPanel {
     }
 
     private void clearForm() {
-        txtApptId.setText("");
+        loadNextAutoId();
         txtNotes.setText("");
         txtDateTime.setText(LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).format(DTF));
         cmbStatus.setSelectedIndex(0);

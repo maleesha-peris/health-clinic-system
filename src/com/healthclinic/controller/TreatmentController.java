@@ -81,6 +81,10 @@ public class TreatmentController {
         dataManager.saveTreatments(clinic.getTreatments());
     }
 
+    public String getNextTreatmentId() {
+        return clinic.generateNextTreatmentId();
+    }
+
     public ArrayList<Treatment> getAllTreatments() {
         return clinic.getTreatments();
     }

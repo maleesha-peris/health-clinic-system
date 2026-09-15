@@ -107,6 +107,10 @@ public class PatientController {
         return SearchAlgorithms.linearSearchPatients(clinic.getPatients(), query);
     }
 
+    public String getNextPatientId() {
+        return clinic.generateNextPatientId();
+    }
+
     public ArrayList<Patient> getAllPatients() {
         return clinic.getPatients();
     }
