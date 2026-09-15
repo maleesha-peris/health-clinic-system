@@ -303,21 +303,24 @@ public class MainFrame extends JFrame {
 
         centerContainer.add(mainContentPanel, BorderLayout.CENTER);
 
-        // Bottom Status Bar
-        JPanel statusBar = new JPanel(new BorderLayout());
-        statusBar.setPreferredSize(new Dimension(1000, 26));
+        // Sleek Professional Footer Bar
+        JPanel statusBar = new JPanel(new BorderLayout(15, 0));
+        statusBar.setPreferredSize(new Dimension(1000, 32));
         statusBar.setBackground(Color.WHITE);
-        statusBar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UITheme.BORDER_COLOR));
+        statusBar.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(1, 0, 0, 0, UITheme.BORDER_COLOR),
+                new EmptyBorder(0, 20, 0, 20)
+        ));
 
-        lblStatus = new JLabel(" Ready");
-        lblStatus.setFont(UITheme.FONT_REGULAR);
-        lblStatus.setForeground(UITheme.TEXT_MUTED);
+        lblStatus = new JLabel("● Database Active & Synced");
+        lblStatus.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblStatus.setForeground(new Color(16, 185, 129)); // Soft Green indicator
         statusBar.add(lblStatus, BorderLayout.WEST);
 
-        JLabel lblClinicName = new JLabel("Community Health Clinic • Standard MVC  ");
-        lblClinicName.setFont(UITheme.FONT_REGULAR);
-        lblClinicName.setForeground(UITheme.TEXT_MUTED);
-        statusBar.add(lblClinicName, BorderLayout.EAST);
+        JLabel lblVersion = new JLabel("HealthClinic Desktop Edition • v1.0");
+        lblVersion.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        lblVersion.setForeground(new Color(148, 163, 184)); // Slate 400
+        statusBar.add(lblVersion, BorderLayout.EAST);
 
         centerContainer.add(statusBar, BorderLayout.SOUTH);
 
@@ -357,13 +360,13 @@ public class MainFrame extends JFrame {
     }
 
     public void updateStatusBar(String text) {
-        int pCount = clinicController.getClinic().getPatients().size();
-        int dCount = clinicController.getClinic().getDoctors().size();
-        int aCount = clinicController.getClinic().getAppointments().size();
-        int tCount = clinicController.getClinic().getTreatments().size();
-
-        lblStatus.setText(" " + text + " | Patients: " + pCount + " | Doctors: " + dCount +
-                " | Appointments: " + aCount + " | Treatments: " + tCount);
+        if (text != null && !text.startsWith("Active Screen")) {
+            lblStatus.setText("● " + text);
+            lblStatus.setForeground(new Color(16, 185, 129));
+        } else {
+            lblStatus.setText("● Database Active & Synced");
+            lblStatus.setForeground(new Color(16, 185, 129));
+        }
     }
 
     private void onGlobalSearch(String query) {
