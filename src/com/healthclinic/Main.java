@@ -5,14 +5,29 @@ import com.healthclinic.view.LoadingScreen;
 import com.healthclinic.view.MainFrame;
 
 import javax.swing.*;
+import java.net.ServerSocket;
 
 /**
  * Application Entry Point.
- * Displays a modern splash loading screen before transitioning to MainFrame.
+ * Implements single-instance protection to prevent duplicate overlapping windows,
+ * and displays a modern splash loading screen before launching the dashboard.
  */
 public class Main {
 
+    private static final int APP_LOCK_PORT = 48567;
+    private static ServerSocket lockSocket;
+
     public static void main(String[] args) {
+        // Enforce Single-Instance to prevent duplicate overlapping windows
+        try {
+            lockSocket = new ServerSocket(APP_LOCK_PORT);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null,
+                    "HealthClinic is already running on this computer.\nPlease switch to the existing window.",
+                    "Application Already Running", JOptionPane.INFORMATION_MESSAGE);
+            System.exit(0);
+        }
+
         // Set System Look and Feel
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -29,25 +44,20 @@ public class Main {
 
                 @Override
                 protected MainFrame doInBackground() throws Exception {
-                    // Step 1: Initialize System
                     publish(20);
-                    Thread.sleep(400);
+                    Thread.sleep(350);
 
-                    // Step 2: Load Data Persistence
                     publish(50);
                     clinicController = new ClinicController();
-                    Thread.sleep(400);
+                    Thread.sleep(350);
 
-                    // Step 3: Build GUI Views
                     publish(85);
-                    MainFrame frame = new MainFrame(clinicController);
-                    Thread.sleep(400);
-
-                    // Step 4: Finalize
-                    publish(100);
                     Thread.sleep(300);
 
-                    return frame;
+                    publish(100);
+                    Thread.sleep(200);
+
+                    return null;
                 }
 
                 @Override
@@ -64,8 +74,9 @@ public class Main {
                 @Override
                 protected void done() {
                     try {
-                        MainFrame mainFrame = get();
                         splash.dispose();
+                        // Construct GUI strictly on EDT
+                        MainFrame mainFrame = new MainFrame(clinicController);
                         mainFrame.setVisible(true);
                     } catch (Exception e) {
                         e.printStackTrace();
