@@ -119,6 +119,7 @@ public class MainFrame extends JFrame {
 
     private void initLayout() {
         getContentPane().setLayout(new BorderLayout());
+        getContentPane().setBackground(UITheme.BG_MAIN);
 
         // 1. LEFT MODERN SIDEBAR (Gradient background)
         JPanel sidebar = new JPanel() {
@@ -303,7 +304,26 @@ public class MainFrame extends JFrame {
 
         centerContainer.add(mainContentPanel, BorderLayout.CENTER);
 
-        // Clean borderless bottom layout - no clunky status bar
+        // Sleek Professional Footer Bar
+        JPanel statusBar = new JPanel(new BorderLayout(15, 0));
+        statusBar.setPreferredSize(new Dimension(1000, 36));
+        statusBar.setBackground(Color.WHITE);
+        statusBar.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(1, 0, 0, 0, UITheme.BORDER_COLOR),
+                new EmptyBorder(0, 20, 0, 20)
+        ));
+
+        lblStatus = new JLabel("● Database Active & Synced");
+        lblStatus.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblStatus.setForeground(new Color(16, 185, 129)); // Soft Green indicator
+        statusBar.add(lblStatus, BorderLayout.WEST);
+
+        JLabel lblVersion = new JLabel("HealthClinic Desktop Edition • v1.0");
+        lblVersion.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblVersion.setForeground(new Color(100, 116, 139)); // Slate 500
+        statusBar.add(lblVersion, BorderLayout.EAST);
+
+        centerContainer.add(statusBar, BorderLayout.SOUTH);
 
         getContentPane().add(centerContainer, BorderLayout.CENTER);
     }
@@ -342,7 +362,13 @@ public class MainFrame extends JFrame {
 
     public void updateStatusBar(String text) {
         if (lblStatus != null) {
-            lblStatus.setText(text != null ? text : "");
+            if (text != null && !text.isEmpty() && !text.startsWith("Active Screen")) {
+                lblStatus.setText("● " + text);
+                lblStatus.setForeground(new Color(16, 185, 129));
+            } else {
+                lblStatus.setText("● Database Active & Synced");
+                lblStatus.setForeground(new Color(16, 185, 129));
+            }
         }
     }
 
@@ -352,30 +378,48 @@ public class MainFrame extends JFrame {
     }
 
     private void onSaveAll() {
-        try {
-            clinicController.saveAllData();
-            JOptionPane.showMessageDialog(this,
-                    "All clinic records successfully saved to CSV files in the data/ directory!",
-                    "Data Saved", JOptionPane.INFORMATION_MESSAGE);
-            updateStatusBar("Data successfully persisted to CSV files.");
-        } catch (DataPersistenceException e) {
-            JOptionPane.showMessageDialog(this,
-                    "Failed to save data: " + e.getMessage(),
-                    "Persistence Error", JOptionPane.ERROR_MESSAGE);
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to save all clinic records to the CSV files on disk?\n" +
+                "This will update patients, doctors, appointments, and treatment records.",
+                "Confirm Save to Files",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                clinicController.saveAllData();
+                JOptionPane.showMessageDialog(this,
+                        "All clinic records have been successfully saved to CSV files in the data/ directory!",
+                        "Save Successful", JOptionPane.INFORMATION_MESSAGE);
+                updateStatusBar("Data successfully persisted to CSV files.");
+            } catch (DataPersistenceException e) {
+                JOptionPane.showMessageDialog(this,
+                        "Failed to save data: " + e.getMessage(),
+                        "Persistence Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
     private void onReloadAll() {
-        try {
-            clinicController.reloadAllData();
-            showView("DASHBOARD");
-            JOptionPane.showMessageDialog(this,
-                    "Clinic data reloaded from files.", "Data Reloaded", JOptionPane.INFORMATION_MESSAGE);
-            updateStatusBar("Data refreshed from files.");
-        } catch (DataPersistenceException e) {
-            JOptionPane.showMessageDialog(this,
-                    "Failed to reload data: " + e.getMessage(),
-                    "Persistence Error", JOptionPane.ERROR_MESSAGE);
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to reload data from disk?\n" +
+                "Any unsaved changes in the current session will be replaced.",
+                "Confirm Reload Data",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                clinicController.reloadAllData();
+                showView("DASHBOARD");
+                JOptionPane.showMessageDialog(this,
+                        "Clinic data reloaded from files successfully.", "Data Reloaded", JOptionPane.INFORMATION_MESSAGE);
+                updateStatusBar("Data refreshed from files.");
+            } catch (DataPersistenceException e) {
+                JOptionPane.showMessageDialog(this,
+                        "Failed to reload data: " + e.getMessage(),
+                        "Persistence Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
