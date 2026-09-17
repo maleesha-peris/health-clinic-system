@@ -10,6 +10,8 @@ import com.healthclinic.model.Doctor;
 import com.healthclinic.model.Patient;
 import com.healthclinic.model.Person;
 import com.healthclinic.model.Treatment;
+import com.healthclinic.util.AuditLogger;
+import com.healthclinic.util.ReportExporter;
 import com.healthclinic.util.SearchAlgorithms;
 import com.healthclinic.util.SortAlgorithms;
 import com.healthclinic.util.ValidationException;
@@ -22,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -298,6 +301,33 @@ public class ClinicSystemJUnitTest {
             String stats = rc.getClinicStatistics();
             assertNotNull(stats);
             assertTrue(stats.contains("Patients:"));
+        }
+    }
+
+    @Nested
+    @DisplayName("Task 6: Audit Logging & Report Export Utilities")
+    class AuditAndExportTests {
+
+        @Test
+        @DisplayName("AuditLogger successfully logs events and maintains session history")
+        void testAuditLogging() {
+            AuditLogger.clearSessionLogs();
+            AuditLogger.log("PATIENT", "Registered new patient P999");
+            AuditLogger.log("APPOINTMENT", "Scheduled appointment A999");
+
+            List<String> logs = AuditLogger.getSessionLogs();
+            assertTrue(logs.size() >= 2);
+            assertTrue(logs.get(0).contains("PATIENT"));
+            assertTrue(logs.get(0).contains("Registered new patient P999"));
+        }
+
+        @Test
+        @DisplayName("ReportExporter generates valid formatted export filename")
+        void testReportFilenameGeneration() {
+            String filename = ReportExporter.generateExportFilename("clinic_summary", "txt");
+            assertNotNull(filename);
+            assertTrue(filename.startsWith("clinic_summary_"));
+            assertTrue(filename.endsWith(".txt"));
         }
     }
 }
