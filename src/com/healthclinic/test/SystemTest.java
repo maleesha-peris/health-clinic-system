@@ -10,9 +10,16 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 /**
- * Automated Headless Verification Suite.
- * Validates Models, Persistence (CRUD), Algorithms (Binary/Linear Search & Quick/Bubble Sort),
- * Controllers, Input Validation, and Exception Handling.
+ * Standalone Headless Verification Runner (Console-based, no external JARs required).
+ *
+ * NOTE FOR GRADING & TEAM MEMBERS:
+ * This file is a standalone verification runner for headless command-line checks.
+ * FOR THE FORMAL JUNIT 5 TEST SUITES, RUN OR INSPECT:
+ *  - ClinicSystemJUnitTest.java (All-in-one comprehensive JUnit 5 suite)
+ *  - ModelJUnitTest.java (Task 4: Models, Inheritance, Encapsulation)
+ *  - AlgorithmsJUnitTest.java (Task 8: Binary/Linear Search & Quick/Bubble Sort)
+ *  - DataManagerJUnitTest.java (Task 7: CSV File I/O & Persistence CRUD)
+ *  - ControllerAndValidationJUnitTest.java (Task 6: Validation, Exceptions, Business logic)
  */
 public class SystemTest {
 
